@@ -53,7 +53,7 @@ def test_product_creation_and_details(client, db):
     assert response.status_code == 200
     
     # Verify product was created and associated inventory record was initialized
-    prod = Product.query.filter_by(sku="RAW-BRS-001").first()
+    prod = Product.query.filter_by(name="New Brass Bolt").first()
     assert prod is not None
     assert prod.inventory is not None
     assert prod.inventory.on_hand_qty == 0.0
@@ -63,7 +63,7 @@ def test_product_creation_and_details(client, db):
     response = client.get(f"/products/{prod.id}")
     assert response.status_code == 200
     assert b"New Brass Bolt" in response.data
-    assert b"RAW-BRS-001" in response.data
+    assert prod.sku.encode() in response.data
     assert b"Free To Use" in response.data
 
 

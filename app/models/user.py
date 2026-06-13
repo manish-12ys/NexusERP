@@ -29,6 +29,8 @@ class User(UserMixin, db.Model):
 
     def has_permission(self, permission_name):
         if self.role:
+            if self.role.name == "Admin":
+                return True
             return self.role.has_permission(permission_name)
         return False
 
