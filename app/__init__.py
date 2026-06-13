@@ -17,6 +17,7 @@ def create_app(config_class=Config):
     socketio.init_app(app)
     bcrypt.init_app(app)
 
+    from app.routes.landing import landing_bp
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.products import products_bp
@@ -34,8 +35,9 @@ def create_app(config_class=Config):
     from app.routes.analytics import analytics_bp
     from app.routes.audit import audit_bp
 
+    app.register_blueprint(landing_bp, url_prefix="/")
     app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(dashboard_bp, url_prefix="/")
+    app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
     app.register_blueprint(products_bp, url_prefix="/products")
     app.register_blueprint(inventory_bp, url_prefix="/inventory")
     app.register_blueprint(sales_bp, url_prefix="/sales")
