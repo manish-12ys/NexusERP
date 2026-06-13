@@ -1,25 +1,88 @@
-{% extends "layouts/base.html" %}
+﻿{% extends "layouts/base.html" %}
+{% block title %}Receipt {{ order.order_number }} - NexusERP{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card"><div class="card-body text-center">
-            <h5>NexusERP</h5>
-            <h6>Receipt</h6>
-            <hr>
-            <p><strong>{{ order.order_number }}</strong></p>
-            <p>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-            <hr>
-            {% for line in order.lines %}
-            <div class="d-flex justify-content-between">
-                <span>{{ line.product.name }} x {{ line.quantity }}</span>
-                <span>₹{{ "%.2f"|format(line.line_total) }}</span>
-            </div>{% endfor %}
-            <hr>
-            <div class="d-flex justify-content-between"><strong>Total</strong><strong>₹{{ "%.2f"|format(order.total_amount) }}</strong></div>
-            <p class="mt-3 text-muted">Payment: {{ order.payment_method }}</p>
-            <button class="btn btn-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
-            <a href="{{ url_for('pos.terminal') }}" class="btn btn-primary">New Sale</a>
-        </div></div>
+<style>
+.receipt-card { max-width: 520px; margin: 0 auto; }
+.receipt-header { letter-spacing: 0.05em; }
+.receipt-line td { padding: 0.55rem 0.35rem; }
+.receipt-line td:first-child { width: 70%; }
+.receipt-summary .row { margin-bottom: 0.5rem; }
+.receipt-summary strong { color: inherit; }
+.receipt-footer { font-size: 0.9rem; color: #6c757d; }
+@media print {
+    @page { size: auto; margin: 10mm; }
+    body { margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact; }
+    .no-print { display: none !important; }
+    .receipt-card { box-shadow: none !important; border: 1px solid #ddd !important; background: #fff !important; }
+    .receipt-card, .receipt-card * { color: #000 !important; }
+    .receipt-summary strong { color: inherit !important; }
+}
+</style>
+
+<div class="receipt-card">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <div class="text-center mb-4 receipt-header">
+                <h3 class="mb-1">NexusERP</h3>
+                <p class="text-muted mb-1">Point of Sale Receipt</p>
+                <p class="small text-secondary">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-2"><span class="text-muted">Receipt</span><strong>{{ order.receipt_number or order.order_number }}</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span class="text-muted">Order</span><strong>{{ order.order_number }}</strong></div>
+                {% if order.customer %}
+                <div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer</span><strong>{{ order.customer.name }}</strong></div>
+                {% endif %}
+                <div class="d-flex justify-content-between mb-2"><span class="text-muted">Session</span><strong>{{ order.session.session_number }}</strong></div>
+                <div class="d-flex justify-content-between"><span class="text-muted">Payment</span><strong>{{ order.payment_method|title }}</strong></div>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table class="table table-borderless table-sm receipt-items">
+                    <tbody>
+                        {% for line in order.lines %}
+                        <tr class="receipt-line">
+                            <td>
+                                <strong>{{ line.product.name }}</strong><br>
+                                <small class="text-muted">{{ line.quantity }} Ã— â‚¹{{ "%.2f"|format(line.unit_price) }}</small>
+                            </td>
+                            <td class="text-end"><strong>â‚¹{{ "%.2f"|format(line.line_total) }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="receipt-summary p-3 rounded-3 bg-dark bg-opacity-10 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-6 text-muted">Subtotal</div>
+                    <div class="col-6 text-end"><strong>â‚¹{{ "%.2f"|format(order.subtotal) }}</strong></div>
+                </div>
+                <div class="row align-items-center">
+                    <div class="col-6 text-muted">Tax</div>
+                    <div class="col-6 text-end"><strong>â‚¹{{ "%.2f"|format(order.tax_amount) }}</strong></div>
+                </div>
+                <div class="row align-items-center border-top pt-2 mt-2">
+                    <div class="col-6"><strong>Total</strong></div>
+                    <div class="col-6 text-end"><strong>â‚¹{{ "%.2f"|format(order.total_amount) }}</strong></div>
+                </div>
+            </div>
+
+            <div class="text-center receipt-footer mb-4">
+                Thank you for your purchase!<br>
+                Please keep this receipt for your records.
+            </div>
+
+            <div class="d-flex gap-2 no-print">
+                <button class="btn btn-secondary w-100" onclick="window.print()" type="button"><i class="bi bi-printer"></i> Print</button>
+                <a href="{{ url_for('pos.terminal') }}" class="btn btn-primary w-100">New Sale</a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
+
+
+
+

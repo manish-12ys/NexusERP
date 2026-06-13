@@ -2,72 +2,222 @@
 {% block title %}POS Terminal - NexusERP{% endblock %}
 {% block content %}
 <h4><i class="bi bi-cash-register"></i> POS Terminal</h4>
+
 {% if not session %}
 <div class="card"><div class="card-body text-center">
-    <form method="POST" action="{{ url_for('pos.open_session') }}" class="d-inline-block">
-        <div class="mb-3"><label class="form-label">Opening Balance</label><input type="number" name="opening_balance" class="form-control" step="0.01" value="0"></div>
-        <button class="btn btn-success"><i class="bi bi-play"></i> Open Session</button>
+    <form method="POST" action="{{ url_for('pos.open_session') }}" class="row gx-3 gy-3 justify-content-center">
+        <div class="col-md-6">
+            <label class="form-label">Opening Balance</label>
+            <input type="number" name="opening_balance" class="form-control" step="0.01" value="0.00">
+        </div>
+        <div class="col-md-12 text-center">
+            <button class="btn btn-success px-4"><i class="bi bi-play"></i> Open Session</button>
+        </div>
     </form>
 </div></div>
 {% else %}
-<div class="alert alert-info">Session: {{ session.session_number }} | Opened: {{ session.opened_at.strftime('%Y-%m-%d %H:%M') }}</div>
-<div class="row">
-    <div class="col-md-8">
-        <div class="card"><div class="card-body">
-            <div class="row g-2">{% for p in products %}
-                <div class="col-md-3">
-                    <button class="btn btn-outline-light w-100 product-btn" data-id="{{ p.id }}" data-name="{{ p.name }}" data-price="{{ p.sales_price }}">
-                        <small>{{ p.name }}</small><br><strong>₹{{ "%.2f"|format(p.sales_price) }}</strong>
-                    </button>
-                </div>{% endfor %}
-            </div>
-        </div></div>
+<div class="card mb-4">
+    <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+        <div>
+            <strong>Session:</strong> {{ session.session_number }}<br>
+            <strong>Opened:</strong> {{ session.opened_at.strftime('%Y-%m-%d %H:%M') }}
+        </div>
+        <div>
+            <form method="POST" action="{{ url_for('pos.close_session') }}" class="row gx-2 gy-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label">Closing Balance</label>
+                    <input type="number" name="closing_balance" class="form-control" value="0.00" step="0.01">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-danger">Close Session</button>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="col-md-4">
-        <div class="card"><div class="card-header"><h6>Cart</h6></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">Products</h6>
+                    <small class="text-muted">Tap a product to add it to the cart.</small>
+                </div>
+                <div class="w-50">
+                    <input id="product-search" type="search" class="form-control form-control-sm" placeholder="Search products...">
+                </div>
+            </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('pos.checkout') }}" id="checkout-form">
-                    <div id="cart-items"></div>
-                    <input type="hidden" name="customer_id" value="">
+                <div class="row g-3" id="product-grid">
+                    {% for p in products %}
+                    <div class="col-sm-6 col-lg-4">
+                        <button type="button" class="btn btn-outline-light w-100 text-start product-btn" data-id="{{ p.id }}" data-name="{{ p.name }}" data-price="{{ p.sales_price }}" data-tax="{{ p.tax_percent }}">
+                            <div class="fw-bold">{{ p.name }}</div>
+                            <div class="small text-muted">{{ p.sku }}</div>
+                            <div class="small text-secondary">Available: {{ p.inventory.free_to_use_qty if p.inventory else 0 }}</div>
+                            <div class="mt-2"><strong>₹{{ "%.2f"|format(p.sales_price) }}</strong></div>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <form method="POST" action="{{ url_for('pos.checkout') }}" id="checkout-form">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">Cart</h6>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div id="cart-items" class="mb-3">
+                        <div class="text-muted">No items yet. Select products to start a sale.</div>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Payment</label>
+                        <label class="form-label">Customer</label>
+                        <select name="customer_id" class="form-select">
+                            <option value="">Walk-in customer</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}">{{ customer.name }}{% if customer.phone %} • {{ customer.phone }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
                         <select name="payment_method" class="form-select">
                             <option value="cash">Cash</option>
                             <option value="card">Card</option>
                             <option value="upi">UPI</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Checkout</button>
-                </form>
+
+                    <div class="card bg-dark bg-opacity-10 p-3 mb-3">
+                        <div class="d-flex justify-content-between"><span>Subtotal</span><strong id="subtotal">₹0.00</strong></div>
+                        <div class="d-flex justify-content-between"><span>Tax</span><strong id="tax">₹0.00</strong></div>
+                        <div class="d-flex justify-content-between"><span>Total</span><strong id="total">₹0.00</strong></div>
+                    </div>
+                </div>
+                <div class="card-footer p-3">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> Complete Sale</button>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 {% endif %}
 {% endblock %}
+
 {% block extra_js %}
 <script>
-document.querySelectorAll('.product-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const id = this.dataset.id;
-        const name = this.dataset.name;
-        const price = this.dataset.price;
-        const cart = document.getElementById('cart-items');
-        const existing = cart.querySelector(`[data-pid="${id}"]`);
+const cart = [];
+const productButtons = document.querySelectorAll('.product-btn');
+const cartItems = document.getElementById('cart-items');
+const subtotalEl = document.getElementById('subtotal');
+const taxEl = document.getElementById('tax');
+const totalEl = document.getElementById('total');
+const productSearch = document.getElementById('product-search');
+const productGrid = document.getElementById('product-grid');
+
+function formatCurrency(value) {
+    return `₹${value.toFixed(2)}`;
+}
+
+function findCartItem(productId) {
+    return cart.find(item => item.id === productId);
+}
+
+function renderCart() {
+    cartItems.innerHTML = '';
+    let subtotal = 0;
+    let tax = 0;
+    let total = 0;
+
+    if (!cart.length) {
+        cartItems.innerHTML = '<div class="text-muted">No items yet. Select products to start a sale.</div>';
+    }
+
+    cart.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'mb-3 border-bottom pb-3';
+        row.setAttribute('data-pid', item.id);
+
+        const lineTotal = item.quantity * item.price;
+        const lineTax = lineTotal * item.taxPercent / 100;
+        subtotal += lineTotal;
+        tax += lineTax;
+        total += lineTotal + lineTax;
+
+        row.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small>${formatCurrency(item.price)}</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-item">Remove</button>
+            </div>
+            <div class="input-group input-group-sm mb-2">
+                <input type="hidden" name="product_id[]" value="${item.id}">
+                <input type="number" name="quantity[]" class="form-control qty-input" min="1" step="1" value="${item.quantity}">
+                <span class="input-group-text">Qty</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Tax ${item.taxPercent}%</small>
+                <strong>${formatCurrency(lineTotal + lineTax)}</strong>
+            </div>
+        `;
+
+        row.querySelector('.qty-input').addEventListener('input', function () {
+            const value = parseInt(this.value, 10) || 1;
+            item.quantity = Math.max(1, value);
+            renderCart();
+        });
+
+        row.querySelector('.remove-item').addEventListener('click', function () {
+            const index = cart.findIndex(c => c.id === item.id);
+            if (index !== -1) {
+                cart.splice(index, 1);
+                renderCart();
+            }
+        });
+
+        cartItems.appendChild(row);
+    });
+
+    subtotalEl.textContent = formatCurrency(subtotal);
+    taxEl.textContent = formatCurrency(tax);
+    totalEl.textContent = formatCurrency(total);
+}
+
+productButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const productId = parseInt(button.dataset.id, 10);
+        const name = button.dataset.name;
+        const price = parseFloat(button.dataset.price) || 0;
+        const taxPercent = parseFloat(button.dataset.tax) || 0;
+        const existing = findCartItem(productId);
+
         if (existing) {
-            const qty = existing.querySelector('.qty-input');
-            qty.value = parseFloat(qty.value) + 1;
+            existing.quantity += 1;
         } else {
-            const div = document.createElement('div');
-            div.className = 'mb-2 border-bottom pb-2';
-            div.setAttribute('data-pid', id);
-            div.innerHTML = `<strong>${name}</strong><br>
-                <input type="hidden" name="product_id[]" value="${id}">
-                <input type="number" name="quantity[]" class="form-control form-control-sm qty-input" value="1" min="0.01" step="1">
-                <small>₹${parseFloat(price).toFixed(2)}</small>`;
-            cart.appendChild(div);
+            cart.push({ id: productId, name, price, taxPercent, quantity: 1 });
         }
+
+        renderCart();
     });
 });
+
+productSearch?.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    productGrid.querySelectorAll('.product-btn').forEach(button => {
+        const label = button.dataset.name.toLowerCase();
+        button.closest('.col-sm-6').style.display = label.includes(query) ? 'block' : 'none';
+    });
+});
+
+renderCart();
 </script>
 {% endblock %}

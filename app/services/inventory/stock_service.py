@@ -26,7 +26,7 @@ class StockService:
         return True, inv
 
     @staticmethod
-    def consume_stock(product_id, quantity, user_id=None):
+    def consume_stock(product_id, quantity, user_id=None, commit=True):
         inv = Inventory.query.filter_by(product_id=product_id).first()
         if not inv:
             return False, "No inventory record found"
@@ -46,5 +46,6 @@ class StockService:
             user_id=user_id,
         )
         db.session.add(entry)
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return True, inv
