@@ -1,9 +1,13 @@
 import os
-import click
 from flask import Flask
 from config import Config
 from app.extensions import db, login_manager, migrate, socketio, bcrypt
 from app.services.audit.auto_audit import register_audit_hooks
+
+try:
+    import click
+except ImportError:
+    click = None
 
 
 def create_app(config_class=Config):
@@ -60,14 +64,24 @@ def create_app(config_class=Config):
     app.register_blueprint(copilot_bp, url_prefix="/copilot")
     app.register_blueprint(kanban_bp, url_prefix="/kanban")
 
-    @app.cli.command("init-db")
-    @click.option("--seed", is_flag=True, help="Seed with demo data")
-    def init_db_command(seed):
-        db.create_all()
-        click.echo("Database tables created.")
-        if seed:
-            from app.seed.demo_data import seed_demo_data
-            seed_demo_data()
-            click.echo("Demo data seeded.")
+    if click is not None:
+        @app.cli.command("init-db")
+        @click.option("--seed", is_flag=True, help="Seed with demo data")
+        def init_db_command(seed):
+            db.create_all()
+            click.echo("Database tables created.")
+            if seed:
+                from app.seed.demo_data import seed_demo_data
+                seed_demo_data()
+                click.echo("Demo data seeded.")
+    else:
+        @app.cli.command("init-db")
+        def init_db_command(seed=None):
+            db.create_all()
+            print("Database tables created.")
+            if seed:
+                from app.seed.demo_data import seed_demo_data
+                seed_demo_data()
+                print("Demo data seeded.")
 
     return app

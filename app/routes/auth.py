@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db
 from app.models.user import User
@@ -135,12 +135,14 @@ def edit_user(user_id):
 @login_required
 def settings():
     if not (current_user.has_permission("manage_users") or (current_user.role and current_user.role.name == "Admin")):
-        abort(403)
+        flash("You are not authorized to access Admin Settings.", "danger")
+        return redirect(url_for("dashboard.index"))
 
     if request.method == "POST":
         action = request.form.get("action")
+        confirmation_code = request.form.get("confirmation_code", "").strip()
+        print(f"DEBUG auth/settings POST action={action} code={confirmation_code}")
         if action == "delete_all_data":
-            confirmation_code = request.form.get("confirmation_code", "").strip()
             if confirmation_code.upper() == "DELETE_ALL_DATA":
                 from app.services.admin.data_service import AdminDataService
                 try:

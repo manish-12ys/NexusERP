@@ -1,3 +1,4 @@
+from sqlalchemy import inspect
 from app.extensions import db
 from app.models.product import Product
 from app.models.category import Category
@@ -26,6 +27,16 @@ from app.models.notification import Notification
 
 class AdminDataService:
     @staticmethod
+    def _table_exists(model):
+        inspector = inspect(db.engine)
+        return inspector.has_table(model.__tablename__)
+
+    @staticmethod
+    def _delete_if_exists(model):
+        if AdminDataService._table_exists(model):
+            model.query.delete()
+
+    @staticmethod
     def delete_all_data_except_users():
         """Delete all business data while preserving users, roles, and permissions"""
         
@@ -33,53 +44,53 @@ class AdminDataService:
         # Start with leaf tables that have no dependents
         
         # Delete POS data
-        PosOrderLine.query.delete()
-        PosOrder.query.delete()
-        PosSession.query.delete()
+        AdminDataService._delete_if_exists(PosOrderLine)
+        AdminDataService._delete_if_exists(PosOrder)
+        AdminDataService._delete_if_exists(PosSession)
         
         # Delete Sales Order data
-        SalesOrderLine.query.delete()
-        SalesOrder.query.delete()
+        AdminDataService._delete_if_exists(SalesOrderLine)
+        AdminDataService._delete_if_exists(SalesOrder)
         
         # Delete Purchase Order data
-        PurchaseOrderLine.query.delete()
-        PurchaseOrder.query.delete()
+        AdminDataService._delete_if_exists(PurchaseOrderLine)
+        AdminDataService._delete_if_exists(PurchaseOrder)
         
         # Delete Manufacturing data
-        WorkOrder.query.delete()
-        ManufacturingOrder.query.delete()
+        AdminDataService._delete_if_exists(WorkOrder)
+        AdminDataService._delete_if_exists(ManufacturingOrder)
         
         # Delete BOM data
-        BomComponent.query.delete()
-        BomOperation.query.delete()
-        Bom.query.delete()
+        AdminDataService._delete_if_exists(BomComponent)
+        AdminDataService._delete_if_exists(BomOperation)
+        AdminDataService._delete_if_exists(Bom)
         
         # Delete Procurement data
-        ProcurementRequest.query.delete()
-        ProcurementRule.query.delete()
+        AdminDataService._delete_if_exists(ProcurementRequest)
+        AdminDataService._delete_if_exists(ProcurementRule)
         
         # Delete Inventory data
-        StockLedger.query.delete()
-        Inventory.query.delete()
+        AdminDataService._delete_if_exists(StockLedger)
+        AdminDataService._delete_if_exists(Inventory)
         
         # Delete Product data (which cascades to related inventory)
-        Product.query.delete()
+        AdminDataService._delete_if_exists(Product)
         
         # Delete Category data
-        Category.query.delete()
+        AdminDataService._delete_if_exists(Category)
         
         # Delete Customer and Vendor data
-        Customer.query.delete()
-        Vendor.query.delete()
+        AdminDataService._delete_if_exists(Customer)
+        AdminDataService._delete_if_exists(Vendor)
         
         # Delete Work Center data
-        WorkCenter.query.delete()
+        AdminDataService._delete_if_exists(WorkCenter)
         
         # Delete audit logs
-        AuditLog.query.delete()
+        AdminDataService._delete_if_exists(AuditLog)
         
         # Delete notifications
-        Notification.query.delete()
+        AdminDataService._delete_if_exists(Notification)
         
         # Commit all deletions
         db.session.commit()
