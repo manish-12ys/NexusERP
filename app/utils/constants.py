@@ -1,7 +1,7 @@
 PRODUCT_TYPES = [
-    ("finished_goods", "Finished Goods"),
-    ("raw_material", "Raw Material"),
-    ("semi_finished", "Semi-Finished"),
+    ("finished_goods", "End Products"),
+    ("raw_material", "Components"),
+    ("semi_finished", "Work-in-Progress"),
     ("service", "Service"),
 ]
 

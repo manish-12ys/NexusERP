@@ -29,7 +29,7 @@ class ProcurementRuleForm(FlaskForm):
         choices=[("purchase", "Purchase"), ("manufacture", "Manufacture")],
     )
     vendor_id = SelectField("Preferred Supplier", coerce=int, validators=[Optional()])
-    lead_time_days = FloatField("Lead Time (days)", default=0)
+    lead_time_days = FloatField("Days to Deliver", default=0)
     min_order_qty = FloatField("Min Order Qty", default=0.0)
     max_order_qty = FloatField("Max Order Qty", default=0.0)
     multiple_qty = FloatField("Multiple Qty", default=0.0)

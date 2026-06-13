@@ -42,9 +42,9 @@
                         <th class="px-4 py-3">SKU</th>
                         <th class="py-3">Name</th>
                         <th class="py-3">Category</th>
-                        <th class="py-3">Sales Price</th>
-                        <th class="py-3">Cost Price</th>
-                        <th class="py-3">Product Type</th>
+                        <th class="py-3">Selling Price</th>
+                        <th class="py-3">Unit Cost</th>
+                        <th class="py-3">Category Type</th>
                         <th class="py-3 text-end px-4">Actions</th>
                     </tr>
                 </thead>
@@ -64,11 +64,11 @@
                         <td class="text-secondary">₹{{ "%.2f"|format(p.cost_price) }}</td>
                         <td>
                             {% if p.product_type == 'raw_material' %}
-                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50">Raw Material</span>
+                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50">Components</span>
                             {% elif p.product_type == 'semi_finished' %}
-                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50">Semi Finished</span>
+                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50">Work-in-Progress</span>
                             {% else %}
-                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50">Finished Goods</span>
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50">End Products</span>
                             {% endif %}
                         </td>
                         <td class="text-end px-4">

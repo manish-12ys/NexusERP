@@ -21,7 +21,7 @@ class SupplierForm(FlaskForm):
     pincode = StringField("Pincode", validators=[Optional(), Length(max=20)])
     gst_number = StringField("GST Number", validators=[Optional(), Length(max=30)])
     payment_terms = StringField("Payment Terms", validators=[Optional(), Length(max=200)])
-    lead_time_days = FloatField("Lead Time (days)", default=0)
+    lead_time_days = FloatField("Days to Deliver", default=0)
     submit = SubmitField("Save")
 
 

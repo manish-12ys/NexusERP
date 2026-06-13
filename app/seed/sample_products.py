@@ -8,15 +8,15 @@ from app.models.bom_component import BomComponent
 
 def seed_sample_products():
     categories_data = [
-        "Raw Materials", "Components", "Finished Goods", "Packaging", "Tools"
+        "Components", "Elements", "End Products", "Packaging", "Tools"
     ]
     for cat_name in categories_data:
         if not Category.query.filter_by(name=cat_name).first():
             db.session.add(Category(name=cat_name))
     db.session.flush()
     
-    raw_cat = Category.query.filter_by(name="Raw Materials").first()
-    finished_cat = Category.query.filter_by(name="Finished Goods").first()
+    raw_cat = Category.query.filter_by(name="Components").first()
+    finished_cat = Category.query.filter_by(name="End Products").first()
     
     products_data = [
         {"name": "Wood Legs", "sku": "RAW-WLG-001", "product_type": "raw_material", "cost_price": 500.00, "sales_price": 800.00, "category": raw_cat, "reorder_level": 100, "safety_stock": 40, "on_hand": 100, "procurement_type": "mts"},

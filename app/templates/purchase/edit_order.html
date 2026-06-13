@@ -42,7 +42,7 @@
                 <h5 class="text-secondary font-secondary border-bottom border-secondary border-opacity-25 pb-2 mb-4"><i class="bi bi-plus-lg"></i> Add Component Line</h5>
                 <form method="POST" action="{{ url_for('purchase.add_line', id=order.id) }}">
                     <div class="mb-3">
-                        <label class="form-label">Raw Material / Product</label>
+                        <label class="form-label">Product / Component</label>
                         <select name="product_id" class="form-select border-secondary bg-dark text-light" required>
                             <option value="">Select a product...</option>
                             {% for p in products %}

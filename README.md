@@ -2,7 +2,7 @@
 
 **NexusERP** is a Flask-based manufacturing ERP built for factory operations that need one connected place for sales, inventory, purchasing, production, POS, reporting, and role-based administration.
 
-The current demo dataset is shaped around a furniture manufacturing workflow: raw materials, finished goods, product recipes, sales demand, purchasing suggestions, production orders, production tasks, and stock movements.
+The current demo dataset is shaped around a furniture manufacturing workflow: components, end products, product recipes, sales demand, purchasing suggestions, production orders, production tasks, and stock movements.
 
 ![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.1-000000?logo=flask&logoColor=white)
@@ -17,11 +17,11 @@ The current demo dataset is shaped around a furniture manufacturing workflow: ra
 NexusERP brings the core factory loop into one web app:
 
 - **Command dashboard** for orders, inventory value, shortages, delayed work, and production progress.
-- **Product and category management** with raw material and finished goods support.
+- **Product and category management** with component and end product support.
 - **Inventory control** with stock views, adjustments, transfers, low-stock checks, and ledger history.
 - **Sales order workflow** with customers, order lines, confirmation, delivery, and reservation logic.
 - **Purchasing workflow** with suppliers, purchase orders, receiving, and stock updates.
-- **Product Recipes** for finished goods costing and production planning.
+- **Product Recipes** for end product costing and production planning.
 - **Production orders and production tasks** for factory execution.
 - **Smart Purchasing automation** for reorder, make-to-stock, and make-to-order planning.
 - **Point of sale terminal** for cashier-led retail transactions.
@@ -220,8 +220,8 @@ The tests use `TestingConfig` with an in-memory SQLite database and seed the rol
 
 The seed scripts create a compact furniture manufacturing dataset, including:
 
-- Raw materials such as wood legs, table tops, screws, wood polish, planks, and cushions.
-- Finished goods such as dining tables, office chairs, and coffee tables.
+- Components such as wood legs, table tops, screws, wood polish, planks, and cushions.
+- End products such as dining tables, office chairs, and coffee tables.
 - BOM recipes that calculate component cost for manufactured products.
 - Sample customers, suppliers, inventory balances, roles, permissions, and demo users.
 

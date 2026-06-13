@@ -1,3 +1,5 @@
+import re
+
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from sqlalchemy import or_
@@ -9,6 +11,39 @@ from app.forms.product_forms import ProductForm, CategoryForm
 from app.utils.decorators import permission_required
 
 products_bp = Blueprint("products", __name__, template_folder="../templates/products")
+
+
+# SKU generation helpers
+SKU_PREFIXES = {
+    "finished_goods": "FG",
+    "raw_material": "RAW",
+    "semi_finished": "SFG",
+    "service": "SRV",
+}
+
+
+def _name_code(name):
+    words = re.findall(r"[A-Za-z0-9]+", name.upper())
+    if not words:
+        return "ITEM"
+
+    initials = "".join(word[0] for word in words[:3])
+    if len(initials) >= 3:
+        return initials[:3]
+
+    compact_name = "".join(words)
+    return (compact_name[:3] or "ITEM").ljust(3, "X")
+
+
+def generate_product_sku(product_type, name):
+    prefix = SKU_PREFIXES.get(product_type, "PRD")
+    base = f"{prefix}-{_name_code(name)}"
+    next_number = 1
+
+    while Product.query.filter_by(sku=f"{base}-{next_number:03d}").first():
+        next_number += 1
+
+    return f"{base}-{next_number:03d}"
 
 
 def _product_unique_fields_are_valid(form, product_id=None):
@@ -77,7 +112,7 @@ def create_product():
     if form.validate_on_submit() and _product_unique_fields_are_valid(form):
         product = Product(
             name=form.name.data,
-            sku=form.sku.data,
+            sku=generate_product_sku(form.product_type.data, form.name.data),
             barcode=form.barcode.data,
             category_id=form.category_id.data,
             description=form.description.data,
@@ -115,7 +150,6 @@ def edit_product(id):
     ]
     if form.validate_on_submit() and _product_unique_fields_are_valid(form, product.id):
         product.name = form.name.data
-        product.sku = form.sku.data
         product.barcode = form.barcode.data
         product.category_id = form.category_id.data
         product.description = form.description.data

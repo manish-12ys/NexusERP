@@ -12,36 +12,36 @@ from wtforms.validators import DataRequired, Optional, Length
 
 class ProductForm(FlaskForm):
     name = StringField("Product Name", validators=[DataRequired(), Length(max=200)])
-    sku = StringField("SKU", validators=[DataRequired(), Length(max=80)])
+    sku = StringField("SKU", validators=[Optional(), Length(max=80)])
     barcode = StringField("Barcode", validators=[Optional(), Length(max=80)])
     category_id = SelectField("Category", coerce=int, validators=[Optional()])
     description = TextAreaField("Description", validators=[Optional()])
-    cost_price = FloatField("Cost Price", default=0.0)
-    sales_price = FloatField("Sales Price", default=0.0)
-    tax_percent = FloatField("Tax %", default=0.0)
+    cost_price = FloatField("Unit Cost", default=0.0)
+    sales_price = FloatField("Selling Price", default=0.0)
+    tax_percent = FloatField("Tax Rate (%)", default=0.0)
     product_type = SelectField(
-        "Product Type",
+        "Category Type",
         choices=[
-            ("finished_goods", "Finished Goods"),
-            ("raw_material", "Raw Material"),
-            ("semi_finished", "Semi-Finished"),
+            ("finished_goods", "End Products"),
+            ("raw_material", "Components"),
+            ("semi_finished", "Work-in-Progress"),
             ("service", "Service"),
         ],
         default="finished_goods",
     )
     unit_of_measure = SelectField(
-        "Unit",
-        choices=[("pcs", "Pieces"), ("kg", "Kg"), ("m", "Meter"), ("l", "Liter")],
+        "Measurement Unit",
+        choices=[("pcs", "Pieces"), ("kg", "Kilograms"), ("m", "Meters"), ("l", "Liters")],
         default="pcs",
     )
     reorder_level = FloatField("Minimum Stock Amount", default=0.0)
     safety_stock = FloatField("Extra Buffer Stock", default=0.0)
     procurement_type = SelectField(
-        "Procurement Type",
-        choices=[("mts", "Make to Stock"), ("mto", "Make to Order")],
+        "Sourcing Method",
+        choices=[("mts", "Stock Before Demand"), ("mto", "Stock After Demand")],
         default="mts",
     )
-    lead_time_days = FloatField("Lead Time (days)", default=0)
+    lead_time_days = FloatField("Days to Deliver", default=0)
     is_active = BooleanField("Active", default=True)
     submit = SubmitField("Save")
 

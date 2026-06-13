@@ -20,11 +20,17 @@
                     {{ form.name(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Dining Table") }}
                 </div>
                 <div class="col-md-3">
+<<<<<<< HEAD
+                    <label class="form-label" for="sku-preview">SKU</label>
+                    <input id="sku-preview" type="text" class="form-control border-secondary bg-dark text-light" value="Auto-generated" readonly>
+                    <div class="form-text text-secondary">Filled automatically after save.</div>
+=======
                     {{ form.sku.label(class="form-label") }}
                     {{ form.sku(class="form-control border-secondary bg-dark text-light" ~ (" is-invalid" if form.sku.errors else ""), placeholder="e.g. FG-DT-001") }}
                     {% for error in form.sku.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
                     {% endfor %}
+>>>>>>> 29f5f39645eb6b4f0d13397a4dc79b5371764050
                 </div>
                 <div class="col-md-3">
                     {{ form.barcode.label(class="form-label") }}
@@ -96,4 +102,42 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (() => {
+        const nameInput = document.querySelector("#name");
+        const typeInput = document.querySelector("#product_type");
+        const preview = document.querySelector("#sku-preview");
+        const prefixes = {
+            finished_goods: "FG",
+            raw_material: "RAW",
+            semi_finished: "SFG",
+            service: "SRV",
+        };
+
+        const codeFromName = (name) => {
+            const words = name.toUpperCase().match(/[A-Z0-9]+/g) || [];
+            if (!words.length) return "ITEM";
+            const initials = words.slice(0, 3).map((word) => word[0]).join("");
+            if (initials.length >= 3) return initials.slice(0, 3);
+            return (words.join("").slice(0, 3) || "ITEM").padEnd(3, "X");
+        };
+
+        const updatePreview = () => {
+            const name = nameInput.value.trim();
+            if (!name) {
+                preview.value = "Auto-generated";
+                return;
+            }
+            const prefix = prefixes[typeInput.value] || "PRD";
+            preview.value = `${prefix}-${codeFromName(name)}-001`;
+        };
+
+        nameInput.addEventListener("input", updatePreview);
+        typeInput.addEventListener("change", updatePreview);
+        updatePreview();
+    })();
+</script>
 {% endblock %}
