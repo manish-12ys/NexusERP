@@ -1,102 +1,485 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}NexusERP — Welcome{% endblock %}
+{% block title %}NexusERP — Unified Enterprise Resource Planning{% endblock %}
 
 {% block content %}
-<div class="container text-center py-5" style="margin-top: 4vh;">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="mb-4">
-                <div class="brand-icon-wrapper d-inline-block mb-3" style="background: var(--gradient-primary); padding: 12px; border-radius: 12px;">
-                    <i class="bi bi-boxes text-white fs-3"></i>
-                </div>
-                <h1 class="display-4 fw-bold text-light">NexusERP</h1>
-                <p class="lead text-muted">Enterprise Resource Planning system for managing products, inventory, sales, purchases, manufacturing, and more.</p>
-            </div>
+<style>
+    /* Hide sidebar and make landing page full-width */
+    .sidebar {
+        display: none !important;
+    }
+    
+    main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
 
-            <div class="d-flex justify-content-center gap-3 mb-5">
-                <a href="{{ url_for('auth.login') }}" class="btn btn-lg btn-outline-secondary px-4"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-lg btn-primary px-4"><i class="bi bi-person-plus"></i> Sign Up</a>
+    body {
+        overflow-x: hidden;
+    }
+
+    .hero-section {
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(13, 148, 136, 0.1);
+        border: 1px solid rgba(13, 148, 136, 0.3);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        color: #0d9488;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: #cbd5e1;
+        max-width: 600px;
+        margin: 0 auto 2rem;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 4rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary-lg {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary-lg:hover {
+        background: linear-gradient(135deg, #475569 0%, #334155 100%);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(51, 65, 85, 0.3);
+        color: #f1f5f9;
+    }
+
+    .btn-secondary-lg {
+        background: transparent;
+        border: 1.5px solid rgba(255, 255, 255, 0.2);
+        color: #cbd5e1;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary-lg:hover {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+        color: #f1f5f9;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 4rem;
+    }
+
+    .feature-card {
+        padding: 2rem;
+        border-radius: 12px;
+        background: rgba(26, 26, 26, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .feature-card:hover {
+        background: rgba(38, 38, 38, 0.8);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-4px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        font-size: 1.75rem;
+        background-size: 100%;
+        background-position: center;
+    }
+
+    .feature-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin-bottom: 0.75rem;
+    }
+
+    .feature-text {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .why-nexus {
+        margin: 5rem 0;
+        text-align: center;
+    }
+
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #f1f5f9;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: #94a3b8;
+        margin-bottom: 3rem;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .benefit-item {
+        text-align: left;
+        padding: 1.5rem;
+        background: rgba(26, 26, 26, 0.5);
+        border-left: 3px solid transparent;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .benefit-item:hover {
+        background: rgba(38, 38, 38, 0.7);
+        border-left-color: #0d9488;
+    }
+
+    .benefit-icon {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .benefit-title {
+        color: #f1f5f9;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .benefit-text {
+        color: #94a3b8;
+        font-size: 0.95rem;
+    }
+
+    .cta-section {
+        background: linear-gradient(135deg, rgba(51, 65, 85, 0.2) 0%, rgba(30, 41, 59, 0.2) 100%);
+        border: 1px solid rgba(13, 148, 136, 0.2);
+        padding: 4rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin: 5rem 0;
+    }
+
+    .cta-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #f1f5f9;
+        margin-bottom: 1rem;
+    }
+
+    .cta-text {
+        color: #cbd5e1;
+        margin-bottom: 2rem;
+        font-size: 1.05rem;
+    }
+
+    .landing-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 3rem 0 2rem;
+        margin-top: 5rem;
+    }
+
+    .footer-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .footer-section h6 {
+        color: #f1f5f9;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .footer-section a {
+        color: #94a3b8;
+        text-decoration: none;
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 0.5rem;
+        transition: color 0.3s ease;
+    }
+
+    .footer-section a:hover {
+        color: #0d9488;
+    }
+
+    .footer-bottom {
+        text-align: center;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        color: #64748b;
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+        .hero-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content animate-fade-in-up">
+            <div class="hero-badge">
+                <i class="bi bi-rocket-fill"></i> Welcome to Enterprise Planning
+            </div>
+            <h1 class="hero-title">Transform Your Business with NexusERP</h1>
+            <p class="hero-subtitle">
+                Complete enterprise resource planning solution. Streamline operations, boost efficiency, and scale confidently with unified management of inventory, sales, purchases, manufacturing, and analytics.
+            </p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary-lg delay-1">
+                    <i class="bi bi-person-plus"></i> Get Started Now
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-secondary-lg delay-2">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </a>
             </div>
         </div>
     </div>
+</section>
 
-    <div class="row g-4 mt-4 justify-content-center" style="max-width: 1100px; margin: 0 auto;">
-        <div class="col-md-4">
-            <div class="card glass-card h-100">
-                <div class="card-body text-center">
-                    <div class="stat-icon-bg mx-auto mb-3" style="background: var(--gradient-primary); color: #fff; display:flex; align-items:center; justify-content:center; border-radius:12px; width:60px; height:60px;">
-                        <i class="bi bi-box fs-4"></i>
-                    </div>
-                    <h5 class="text-light">Inventory</h5>
-                    <p class="text-muted small">Track stock levels, manage warehouses, and automate reordering.</p>
+<!-- Core Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Powerful Features Built for Business</h2>
+            <p class="section-subtitle">Everything you need to manage, scale, and grow your enterprise in one integrated platform</p>
+        </div>
+        
+        <div class="feature-grid">
+            <div class="feature-card animate-fade-in-up delay-1">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #334155 0%, #1e293b 100%);">
+                    <i class="bi bi-box text-white"></i>
                 </div>
+                <h5 class="feature-title">Smart Inventory</h5>
+                <p class="feature-text">Real-time stock tracking, multi-warehouse management, automated reordering, and intelligent stock ledger management for optimized inventory levels.</p>
+            </div>
+
+            <div class="feature-card animate-fade-in-up delay-2">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);">
+                    <i class="bi bi-cart text-white"></i>
+                </div>
+                <h5 class="feature-title">Sales & Purchases</h5>
+                <p class="feature-text">Manage complete order lifecycles, invoices, customer relationships, and vendor partnerships with integrated order-to-payment workflows.</p>
+            </div>
+
+            <div class="feature-card animate-fade-in-up delay-3">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #4d7c0f 0%, #3f6212 100%);">
+                    <i class="bi bi-gear text-white"></i>
+                </div>
+                <h5 class="feature-title">Manufacturing</h5>
+                <p class="feature-text">Create and manage Bills of Materials, schedule production, track work orders, and optimize manufacturing operations seamlessly.</p>
+            </div>
+
+            <div class="feature-card animate-fade-in-up delay-1">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #b45309 0%, #92400e 100%);">
+                    <i class="bi bi-cash-register text-white"></i>
+                </div>
+                <h5 class="feature-title">POS Terminal</h5>
+                <p class="feature-text">Modern point-of-sale interface with UPI payment support, real-time transactions, and seamless integration with your inventory system.</p>
+            </div>
+
+            <div class="feature-card animate-fade-in-up delay-2">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #be123c 0%, #9f1239 100%);">
+                    <i class="bi bi-shield-check text-white"></i>
+                </div>
+                <h5 class="feature-title">Enterprise Security</h5>
+                <p class="feature-text">Role-based access control, granular permissions, comprehensive audit logging, and enterprise-grade security for your business data.</p>
+            </div>
+
+            <div class="feature-card animate-fade-in-up delay-3">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #334155 0%, #1e293b 100%);">
+                    <i class="bi bi-graph-up text-white"></i>
+                </div>
+                <h5 class="feature-title">Analytics & Insights</h5>
+                <p class="feature-text">Real-time dashboards, KPI tracking, business health monitoring, demand forecasting, and data-driven decision making tools.</p>
             </div>
         </div>
+    </div>
+</section>
 
-        <div class="col-md-4">
-            <div class="card glass-card h-100">
-                <div class="card-body text-center">
-                    <div class="stat-icon-bg mx-auto mb-3" style="background: var(--gradient-info); color: #fff; display:flex; align-items:center; justify-content:center; border-radius:12px; width:60px; height:60px;">
-                        <i class="bi bi-cart fs-4"></i>
+<!-- Why NexusERP Section -->
+<section class="why-nexus">
+    <div class="container">
+        <h2 class="section-title">Why Choose NexusERP?</h2>
+        <p class="section-subtitle">Built for businesses that want to operate smarter, not harder</p>
+        
+        <div class="row g-4 mt-4">
+            <div class="col-md-6">
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-lightning-fill"></i>
                     </div>
-                    <h5 class="text-light">Sales & Purchases</h5>
-                    <p class="text-muted small">Manage orders, invoices, customers, and vendors in one place.</p>
+                    <h6 class="benefit-title">Lightning Fast</h6>
+                    <p class="benefit-text">Optimized performance ensures your team stays productive with instant data access and real-time updates.</p>
                 </div>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card glass-card h-100">
-                <div class="card-body text-center">
-                    <div class="stat-icon-bg mx-auto mb-3" style="background: var(--gradient-success); color: #fff; display:flex; align-items:center; justify-content:center; border-radius:12px; width:60px; height:60px;">
-                        <i class="bi bi-gear fs-4"></i>
+            <div class="col-md-6">
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-layers"></i>
                     </div>
-                    <h5 class="text-light">Manufacturing</h5>
-                    <p class="text-muted small">Create BOMs, plan production, and track work orders seamlessly.</p>
+                    <h6 class="benefit-title">Fully Integrated</h6>
+                    <p class="benefit-text">All modules work together seamlessly, eliminating data silos and ensuring consistency across operations.</p>
                 </div>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card glass-card h-100">
-                <div class="card-body text-center">
-                    <div class="stat-icon-bg mx-auto mb-3" style="background: var(--gradient-primary); color: #fff; display:flex; align-items:center; justify-content:center; border-radius:12px; width:60px; height:60px;">
-                        <i class="bi bi-graph-up fs-4"></i>
+            <div class="col-md-6">
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
                     </div>
-                    <h5 class="text-light">Analytics</h5>
-                    <p class="text-muted small">Real-time dashboards, KPIs, and business health insights.</p>
+                    <h6 class="benefit-title">Scalable Growth</h6>
+                    <p class="benefit-text">Grow your business without worrying about outgrowing your systems. Scale effortlessly as you expand.</p>
                 </div>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card glass-card h-100">
-                <div class="card-body text-center">
-                    <div class="stat-icon-bg mx-auto mb-3" style="background: var(--gradient-warning); color: #fff; display:flex; align-items:center; justify-content:center; border-radius:12px; width:60px; height:60px;">
-                        <i class="bi bi-cash-register fs-4"></i>
+            <div class="col-md-6">
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <i class="bi bi-question-circle"></i>
                     </div>
-                    <h5 class="text-light">POS Terminal</h5>
-                    <p class="text-muted small">Point of sale interface for retail transactions with UPI support.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card glass-card h-100">
-                <div class="card-body text-center">
-                    <div class="stat-icon-bg mx-auto mb-3" style="background: var(--gradient-danger); color: #fff; display:flex; align-items:center; justify-content:center; border-radius:12px; width:60px; height:60px;">
-                        <i class="bi bi-shield-check fs-4"></i>
-                    </div>
-                    <h5 class="text-light">Role-Based Access</h5>
-                    <p class="text-muted small">Granular permissions and audit logging for enterprise security.</p>
+                    <h6 class="benefit-title">Easy to Use</h6>
+                    <p class="benefit-text">Intuitive interface requires minimal training. Your team will be productive from day one.</p>
                 </div>
             </div>
         </div>
     </div>
+</section>
 
-    <footer class="text-center text-muted py-4 border-top border-secondary mt-5">
-        <small>&copy; 2026 NexusERP. All rights reserved.</small>
-    </footer>
-</div>
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="cta-title">Ready to Revolutionize Your Operations?</h2>
+        <p class="cta-text">Join businesses that have transformed their operations with NexusERP</p>
+        <div class="hero-buttons justify-content-center">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary-lg">
+                <i class="bi bi-rocket"></i> Start Your Free Trial
+            </a>
+            <a href="#" class="btn btn-secondary-lg">
+                <i class="bi bi-telephone"></i> Contact Sales
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="landing-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h6>Product</h6>
+                <a href="#">Features</a>
+                <a href="#">Pricing</a>
+                <a href="#">Security</a>
+                <a href="#">Enterprise</a>
+            </div>
+            <div class="footer-section">
+                <h6>Company</h6>
+                <a href="#">About Us</a>
+                <a href="#">Blog</a>
+                <a href="#">Careers</a>
+                <a href="#">Contact</a>
+            </div>
+            <div class="footer-section">
+                <h6>Resources</h6>
+                <a href="#">Documentation</a>
+                <a href="#">Support</a>
+                <a href="#">Community</a>
+                <a href="#">Status</a>
+            </div>
+            <div class="footer-section">
+                <h6>Legal</h6>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Cookie Policy</a>
+                <a href="#">Compliance</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 NexusERP. All rights reserved. | Transforming Business Operations</p>
+        </div>
+    </div>
+</footer>
 {% endblock %}
