@@ -1,31 +1,165 @@
 {% extends "layouts/base.html" %}
+{% block title %}Purchase Order Details - {{ order.order_number }} - NexusERP{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>{{ order.order_number }}</h4>
-    <div>{% if order.status == 'draft' %}
-        <a href="{{ url_for('purchase.edit_order', id=order.id) }}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <a href="{{ url_for('purchase.list_orders') }}" class="btn btn-outline-secondary btn-sm rounded-pill me-3"><i class="bi bi-arrow-left"></i> Back to List</a>
+        <h1 class="h3 mb-0 text-gradient"><i class="bi bi-file-earmark-spreadsheet"></i> PO: {{ order.order_number }}</h1>
+    </div>
+    
+    <div class="d-flex gap-2">
+        {% if order.status == 'draft' and current_user.has_permission('create_purchases') %}
+        <a href="{{ url_for('purchase.edit_order', id=order.id) }}" class="btn btn-outline-secondary px-4"><i class="bi bi-pencil"></i> Edit Order</a>
+        {% endif %}
+        
+        {% if order.status == 'draft' and current_user.has_permission('confirm_purchases') %}
         <form method="POST" action="{{ url_for('purchase.confirm_order', id=order.id) }}" class="d-inline">
-            <button class="btn btn-success"><i class="bi bi-check-lg"></i> Confirm</button>
-        </form>{% elif order.status == 'confirmed' %}
-        <a href="{{ url_for('purchase.receive_order', id=order.id) }}" class="btn btn-primary"><i class="bi bi-inbox"></i> Receive</a>{% endif %}
+            <button type="submit" class="btn btn-success bg-gradient border-0 px-4 py-2"><i class="bi bi-check-lg"></i> Confirm Order</button>
+        </form>
+        {% elif order.status == 'confirmed' and current_user.has_permission('receive_purchases') %}
+        <a href="{{ url_for('purchase.receive_order', id=order.id) }}" class="btn btn-primary bg-gradient border-0 px-4 py-2"><i class="bi bi-box-arrow-in-down"></i> Receive Goods</a>
+        {% endif %}
     </div>
 </div>
-<div class="row">
-    <div class="col-md-6">
-        <div class="card"><div class="card-body">
-            <p><strong>Vendor:</strong> {{ order.vendor.name }}</p>
-            <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if order.status == 'received' else 'warning' if order.status == 'confirmed' else 'secondary' }}">{{ order.status }}</span></p>
-        </div></div>
+
+<!-- Progress Timeline Tracker -->
+<div class="card shadow border-0 glass-card mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center position-relative w-75 mx-auto py-3">
+            <!-- Background Line -->
+            <div class="position-absolute top-50 start-0 end-0 translate-middle-y bg-secondary bg-opacity-25" style="height: 4px; z-index: 1;"></div>
+            <!-- Progress Fill Line -->
+            <div class="position-absolute top-50 start-0 translate-middle-y bg-primary" 
+                 style="height: 4px; z-index: 2; width: {% if order.status == 'draft' %}0%{% elif order.status == 'confirmed' %}50%{% elif order.status in ('received', 'closed') %}100%{% else %}0%{% endif %}; transition: width 0.4s ease;"></div>
+            
+            <!-- Step 1: Draft -->
+            <div class="d-flex flex-column align-items-center position-relative" style="z-index: 3;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center border-3 border-dark" 
+                     style="width: 40px; height: 40px; background-color: #0d6efd; color: white;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <span class="mt-2 font-secondary text-light fw-medium">Draft</span>
+            </div>
+            
+            <!-- Step 2: Confirmed -->
+            <div class="d-flex flex-column align-items-center position-relative" style="z-index: 3;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center border-3 border-dark" 
+                     style="width: 40px; height: 40px; background-color: {% if order.status in ('confirmed', 'received', 'closed') %}#0d6efd{% else %}#2b3035{% endif %}; color: {% if order.status in ('confirmed', 'received', 'closed') %}white{% else %}#adb5bd{% endif %};">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <span class="mt-2 font-secondary {% if order.status in ('confirmed', 'received', 'closed') %}text-light{% else %}text-muted{% endif %} fw-medium">Confirmed</span>
+            </div>
+            
+            <!-- Step 3: Received -->
+            <div class="d-flex flex-column align-items-center position-relative" style="z-index: 3;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center border-3 border-dark" 
+                     style="width: 40px; height: 40px; background-color: {% if order.status in ('received', 'closed') %}#198754{% else %}#2b3035{% endif %}; color: {% if order.status in ('received', 'closed') %}white{% else %}#adb5bd{% endif %};">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                </div>
+                <span class="mt-2 font-secondary {% if order.status in ('received', 'closed') %}text-light{% else %}text-muted{% endif %} fw-medium">Received</span>
+            </div>
+        </div>
     </div>
-    <div class="col-12 mt-3">
-        <div class="card"><div class="card-body">
-            <table class="table table-dark table-sm">
-                <thead><tr><th>Product</th><th>Qty</th><th>Cost</th><th>Total</th></tr></thead>
-                <tbody>{% for line in order.lines %}
-                    <tr><td>{{ line.product.name }}</td><td>{{ line.quantity }}</td><td>₹{{ "%.2f"|format(line.unit_cost) }}</td><td>₹{{ "%.2f"|format(line.line_total) }}</td></tr>{% endfor %}
-                </tbody>
-            </table>
-        </div></div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Panel: Vendor Details -->
+    <div class="col-lg-4">
+        <div class="card shadow border-0 glass-card h-100">
+            <div class="card-body p-4">
+                <h5 class="text-secondary font-secondary border-bottom border-secondary border-opacity-25 pb-2 mb-3"><i class="bi bi-shop"></i> Vendor Info</h5>
+                <p class="mb-4">
+                    <a href="{{ url_for('vendors.view_vendor', id=order.vendor_id) }}" class="text-white fw-bold link-underline-opacity-0 fs-5 hover-link">
+                        {{ order.vendor.name }}
+                    </a><br>
+                    {% if order.vendor.contact_person %}<span class="text-secondary">Attn:</span> {{ order.vendor.contact_person }}<br>{% endif %}
+                    {% if order.vendor.email %}{{ order.vendor.email }}<br>{% endif %}
+                    {% if order.vendor.phone %}{{ order.vendor.phone }}<br>{% endif %}
+                    {% if order.vendor.gst_number %}<span class="badge bg-dark mt-2">GST: {{ order.vendor.gst_number }}</span>{% endif %}
+                </p>
+
+                <h5 class="text-secondary font-secondary border-bottom border-secondary border-opacity-25 pb-2 mb-3"><i class="bi bi-clock"></i> Important Dates</h5>
+                <ul class="list-unstyled mb-4">
+                    <li class="mb-2 d-flex justify-content-between">
+                        <span class="text-secondary">PO Date:</span>
+                        <span class="text-light fw-medium">{{ order.order_date.strftime('%Y-%m-%d %H:%M') if order.order_date else '-' }}</span>
+                    </li>
+                    <li class="mb-2 d-flex justify-content-between">
+                        <span class="text-secondary">Expected Receipt:</span>
+                        <span class="text-light fw-medium">{{ order.expected_date.strftime('%Y-%m-%d') if order.expected_date else '-' }}</span>
+                    </li>
+                    <li class="mb-2 d-flex justify-content-between">
+                        <span class="text-secondary">Actual Received:</span>
+                        <span class="text-light fw-medium">{{ order.received_date.strftime('%Y-%m-%d %H:%M') if order.received_date else '-' }}</span>
+                    </li>
+                </ul>
+
+                <h5 class="text-secondary font-secondary border-bottom border-secondary border-opacity-25 pb-2 mb-3"><i class="bi bi-file-earmark-text"></i> Internal Notes</h5>
+                <p class="text-light text-break mb-0">{{ order.notes or 'No notes provided.' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Line Items & Totals -->
+    <div class="col-lg-8">
+        <div class="card shadow border-0 glass-card">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <h5 class="text-light mb-0"><i class="bi bi-list-ul"></i> PO Lines</h5>
+            </div>
+            <div class="card-body px-0 py-3">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped align-middle mb-0">
+                        <thead>
+                            <tr class="font-secondary">
+                                <th class="px-4 py-2">Product</th>
+                                <th class="py-2">Ordered Qty</th>
+                                <th class="py-2">Received Qty</th>
+                                <th class="py-2">Unit Cost</th>
+                                <th class="py-2 text-end px-4">Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for line in order.lines %}
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="fw-bold text-light">{{ line.product.name }}</div>
+                                    <small class="text-secondary">{{ line.product.sku }}</small>
+                                </td>
+                                <td>{{ line.quantity }}</td>
+                                <td>
+                                    <span class="badge {% if line.received_qty == line.quantity %}bg-success bg-opacity-25 text-success{% else %}bg-secondary bg-opacity-25 text-secondary{% endif %}">
+                                        {{ line.received_qty }} / {{ line.quantity }}
+                                    </span>
+                                </td>
+                                <td class="text-secondary">₹{{ "%.2f"|format(line.unit_cost) }}</td>
+                                <td class="text-end px-4 fw-medium text-light">₹{{ "%.2f"|format(line.line_total) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="p-4 border-top border-secondary border-opacity-25">
+                    <div class="row justify-content-end">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary">Subtotal:</span>
+                                <span class="text-light">₹{{ "%.2f"|format(order.subtotal) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                                <span class="text-secondary">Tax Amount:</span>
+                                <span class="text-light">₹{{ "%.2f"|format(order.tax_amount) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-light fw-bold fs-5">Grand Total:</span>
+                                <span class="text-gradient fw-bold fs-5">₹{{ "%.2f"|format(order.total_amount) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

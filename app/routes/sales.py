@@ -12,17 +12,42 @@ from app.services.inventory.stock_service import StockService
 from app.utils.decorators import permission_required
 
 sales_bp = Blueprint("sales", __name__, template_folder="../templates/sales")
-
-
 @sales_bp.route("/")
 @login_required
 @permission_required("view_sales")
 def list_orders():
     page = request.args.get("page", 1, type=int)
-    orders = SalesOrder.query.order_by(SalesOrder.created_at.desc()).paginate(
+    search = request.args.get("search", "", type=str)
+    status_filter = request.args.get("status", "", type=str)
+
+    query = SalesOrder.query.join(Customer)
+    if search:
+        query = query.filter(
+            SalesOrder.order_number.ilike(f"%{search}%") |
+            Customer.name.ilike(f"%{search}%")
+        )
+    if status_filter:
+        query = query.filter(SalesOrder.status == status_filter)
+
+    orders = query.order_by(SalesOrder.created_at.desc()).paginate(
         page=page, per_page=20
     )
-    return render_template("sales/orders.html", orders=orders)
+
+    # Compute KPI totals
+    total_sales_val = db.session.query(db.func.sum(SalesOrder.total_amount))\
+        .filter(SalesOrder.status.in_(["confirmed", "delivered", "closed"])).scalar() or 0.0
+    open_orders_cnt = SalesOrder.query.filter(SalesOrder.status.in_(["draft", "confirmed"])).count()
+    completed_orders_cnt = SalesOrder.query.filter(SalesOrder.status.in_(["delivered", "closed"])).count()
+
+    return render_template(
+        "sales/orders.html",
+        orders=orders,
+        search=search,
+        status_filter=status_filter,
+        total_sales_val=total_sales_val,
+        open_orders_cnt=open_orders_cnt,
+        completed_orders_cnt=completed_orders_cnt
+    )
 
 
 @sales_bp.route("/create", methods=["GET", "POST"])
@@ -36,14 +61,17 @@ def create_order():
     ]
     if form.validate_on_submit():
         sales_service = SalesService()
-        order = sales_service.create_order(
+        order, err = sales_service.create_order(
             customer_id=form.customer_id.data,
             user_id=current_user.id,
             expected_date=form.expected_date.data,
             notes=form.notes.data,
         )
-        flash(f"Sales Order {order.order_number} created.", "success")
-        return redirect(url_for("sales.edit_order", id=order.id))
+        if err:
+            flash(err, "danger")
+        else:
+            flash(f"Sales Order {order.order_number} created.", "success")
+            return redirect(url_for("sales.edit_order", id=order.id))
     return render_template("sales/create_order.html", form=form)
 
 
@@ -106,9 +134,12 @@ def add_line(id):
 @permission_required("confirm_sales")
 def confirm_order(id):
     sales_service = SalesService()
-    order = sales_service.confirm_order(id)
-    flash(f"Order {order.order_number} confirmed.", "success")
-    return redirect(url_for("sales.view_order", id=order.id))
+    order, err = sales_service.confirm_order(id, user_id=current_user.id)
+    if err:
+        flash(err, "danger")
+    else:
+        flash(f"Order {order.order_number} confirmed.", "success")
+    return redirect(url_for("sales.view_order", id=id))
 
 
 @sales_bp.route("/<int:id>/deliver", methods=["POST"])
@@ -117,6 +148,9 @@ def confirm_order(id):
 def deliver_order(id):
     from app.services.sales.delivery_service import DeliveryService
     delivery_service = DeliveryService()
-    order = delivery_service.deliver_order(id)
-    flash(f"Order {order.order_number} delivered.", "success")
-    return redirect(url_for("sales.view_order", id=order.id))
+    order, err = delivery_service.deliver_order(id, user_id=current_user.id)
+    if err:
+        flash(err, "danger")
+    else:
+        flash(f"Order {order.order_number} delivered.", "success")
+    return redirect(url_for("sales.view_order", id=id))

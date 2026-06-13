@@ -8,36 +8,39 @@ from datetime import datetime
 
 class SalesService:
     @staticmethod
-    def create_order(customer_id, items, user_id=None):
+    def create_order(customer_id, items=None, user_id=None, expected_date=None, notes=None):
         order = SalesOrder(
             order_number=SalesService._generate_order_number(),
             customer_id=customer_id,
             user_id=user_id,
+            expected_date=expected_date,
+            notes=notes,
             status="draft",
         )
         db.session.add(order)
         db.session.flush()
 
         subtotal = 0.0
-        for item in items:
-            product = Product.query.get(item["product_id"])
-            if not product:
-                return None, f"Product {item['product_id']} not found"
-            qty = item["quantity"]
-            unit_price = item.get("unit_price", product.sales_price)
-            tax_pct = item.get("tax_percent", product.tax_percent)
-            line_total = qty * unit_price
+        if items:
+            for item in items:
+                product = Product.query.get(item["product_id"])
+                if not product:
+                    return None, f"Product {item['product_id']} not found"
+                qty = item["quantity"]
+                unit_price = item.get("unit_price", product.sales_price)
+                tax_pct = item.get("tax_percent", product.tax_percent)
+                line_total = qty * unit_price
 
-            line = SalesOrderLine(
-                sales_order_id=order.id,
-                product_id=product.id,
-                quantity=qty,
-                unit_price=unit_price,
-                tax_percent=tax_pct,
-                line_total=line_total,
-            )
-            db.session.add(line)
-            subtotal += line_total
+                line = SalesOrderLine(
+                    sales_order_id=order.id,
+                    product_id=product.id,
+                    quantity=qty,
+                    unit_price=unit_price,
+                    tax_percent=tax_pct,
+                    line_total=line_total,
+                )
+                db.session.add(line)
+                subtotal += line_total
 
         order.subtotal = subtotal
         order.total_amount = subtotal

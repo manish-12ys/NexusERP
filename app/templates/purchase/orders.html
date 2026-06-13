@@ -1,21 +1,164 @@
 {% extends "layouts/base.html" %}
-{% block title %}Purchase Orders - NexusERP{% endblock %}
+{% block title %}Purchase Orders Directory - NexusERP{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-truck"></i> Purchase Orders</h4>
-    <a href="{{ url_for('purchase.create_order') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New PO</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gradient"><i class="bi bi-truck"></i> Purchase Orders</h1>
+    {% if current_user.has_permission('create_purchases') %}
+    <a href="{{ url_for('purchase.create_order') }}" class="btn btn-primary bg-gradient border-0 px-4 py-2"><i class="bi bi-plus-lg"></i> New PO</a>
+    {% endif %}
 </div>
-<div class="card"><div class="card-body">
-    <table class="table table-dark table-hover">
-        <thead><tr><th>PO</th><th>Vendor</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr></thead>
-        <tbody>{% for po in orders.items %}
-            <tr>
-                <td>{{ po.order_number }}</td><td>{{ po.vendor.name }}</td><td>{{ po.order_date.strftime('%Y-%m-%d') }}</td>
-                <td>₹{{ "%.2f"|format(po.total_amount) }}</td>
-                <td><span class="badge bg-{{ 'success' if po.status == 'received' else 'warning' if po.status == 'confirmed' else 'secondary' }}">{{ po.status }}</span></td>
-                <td><a href="{{ url_for('purchase.view_order', id=po.id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a></td>
-            </tr>{% else %}<tr><td colspan="6" class="text-muted text-center">No POs.</td></tr>{% endfor %}
-        </tbody>
-    </table>
-</div></div>
+
+<!-- KPI Summary Cards -->
+<div class="row g-3 mb-4">
+    <!-- Card 1: Total Purchase Value -->
+    <div class="col-md-4">
+        <div class="card shadow border-0 glass-card">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="rounded-circle bg-success bg-opacity-25 text-success p-3 me-3">
+                    <i class="bi bi-currency-rupee fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-secondary mb-1">Total Procurement Cost</h6>
+                    <h3 class="mb-0 text-light fw-bold">₹{{ "%.2f"|format(total_purchase_val or 0.0) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Card 2: Open POs -->
+    <div class="col-md-4">
+        <div class="card shadow border-0 glass-card">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="rounded-circle bg-warning bg-opacity-25 text-warning p-3 me-3">
+                    <i class="bi bi-hourglass-split fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-secondary mb-1">Active / Open POs</h6>
+                    <h3 class="mb-0 text-light">{{ open_orders_cnt }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Card 3: Received -->
+    <div class="col-md-4">
+        <div class="card shadow border-0 glass-card">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="rounded-circle bg-info bg-opacity-25 text-info p-3 me-3">
+                    <i class="bi bi-check2-all fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-secondary mb-1">Received POs</h6>
+                    <h3 class="mb-0 text-light">{{ completed_orders_cnt }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Status Filters -->
+<div class="card shadow border-0 glass-card mb-4">
+    <div class="card-body p-4">
+        <form method="GET" action="{{ url_for('purchase.list_orders') }}" class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control border-secondary bg-dark text-light" placeholder="Search by PO # or Vendor..." value="{{ search or '' }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="status" class="form-select border-secondary bg-dark text-light" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                    <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Received</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary bg-gradient border-0 px-3 py-2 w-100">Filter</button>
+                <a href="{{ url_for('purchase.list_orders') }}" class="btn btn-outline-secondary px-3 py-2">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card shadow border-0 glass-card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-striped table-hover mb-0 align-middle">
+                <thead>
+                    <tr class="font-secondary">
+                        <th class="px-4 py-3">PO Number</th>
+                        <th class="py-3">Vendor</th>
+                        <th class="py-3">Order Date</th>
+                        <th class="py-3">Expected Date</th>
+                        <th class="py-3">Total Amount</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3 text-end px-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders.items %}
+                    <tr>
+                        <td class="px-4 py-3 fw-bold text-gradient">{{ o.order_number }}</td>
+                        <td>
+                            <a href="{{ url_for('vendors.view_vendor', id=o.vendor_id) }}" class="text-white fw-bold link-underline-opacity-0 hover-link">
+                                {{ o.vendor.name }}
+                            </a>
+                        </td>
+                        <td class="text-secondary">{{ o.order_date.strftime('%Y-%m-%d %H:%M') if o.order_date else '-' }}</td>
+                        <td class="text-secondary">{{ o.expected_date.strftime('%Y-%m-%d') if o.expected_date else '-' }}</td>
+                        <td class="fw-medium text-light">₹{{ "%.2f"|format(o.total_amount) }}</td>
+                        <td>
+                            {% if o.status == 'draft' %}
+                                <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-50">Draft</span>
+                            {% elif o.status in ('confirmed', 'approved') %}
+                                <span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-50">Confirmed</span>
+                            {% elif o.status in ('received', 'closed') %}
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50">Received</span>
+                            {% else %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50">{{ o.status|capitalize }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end px-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ url_for('purchase.view_order', id=o.id) }}" class="btn btn-sm btn-outline-info rounded-pill" title="View"><i class="bi bi-eye"></i></a>
+                                {% if o.status == 'draft' and current_user.has_permission('create_purchases') %}
+                                <a href="{{ url_for('purchase.edit_order', id=o.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill" title="Edit"><i class="bi bi-pencil"></i></a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-cart-x display-6 mb-3 d-block text-secondary"></i>
+                            No purchase orders found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if orders.pages > 1 %}
+<div class="d-flex justify-content-center mt-4">
+    <nav>
+        <ul class="pagination pagination-sm">
+            {% for page_num in orders.iter_pages() %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == orders.page %}active{% endif %}">
+                        <a class="page-link bg-dark border-secondary text-light {% if page_num == orders.page %}bg-primary{% endif %}" href="{{ url_for('purchase.list_orders', page=page_num, search=search, status=status_filter) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link bg-dark border-secondary text-muted">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
 {% endblock %}

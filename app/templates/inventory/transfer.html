@@ -1,0 +1,44 @@
+{% extends "layouts/base.html" %}
+{% block title %}Transfer Stock - NexusERP{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow border-0 glass-card">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-gradient"><i class="bi bi-arrow-left-right"></i> Transfer Stock</h5>
+                <a href="{{ url_for('inventory.stock_view') }}" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-x-lg"></i> Cancel</a>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-secondary small mb-4">Relocate inventory quantities to different warehouses and functional storage locations inside the ERP.</p>
+                
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.product_id.label(class="form-label font-secondary") }}
+                        {{ form.product_id(class="form-select bg-dark border-secondary text-light") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.quantity.label(class="form-label font-secondary") }}
+                        {{ form.quantity(class="form-control border-secondary bg-dark text-light", placeholder="e.g. 15") }}
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            {{ form.to_warehouse.label(class="form-label font-secondary") }}
+                            {{ form.to_warehouse(class="form-control border-secondary bg-dark text-light", placeholder="e.g. POS Warehouse") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.to_location.label(class="form-label font-secondary") }}
+                            {{ form.to_location(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Counter Shelf 3") }}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary bg-gradient border-0 px-4 py-2 w-100"><i class="bi bi-arrow-left-right"></i> Execute Location Transfer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

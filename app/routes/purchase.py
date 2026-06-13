@@ -17,10 +17,37 @@ purchase_bp = Blueprint("purchase", __name__, template_folder="../templates/purc
 @permission_required("view_purchases")
 def list_orders():
     page = request.args.get("page", 1, type=int)
-    orders = PurchaseOrder.query.order_by(PurchaseOrder.created_at.desc()).paginate(
+    search = request.args.get("search", "", type=str)
+    status_filter = request.args.get("status", "", type=str)
+
+    query = PurchaseOrder.query.join(Vendor)
+    if search:
+        query = query.filter(
+            PurchaseOrder.order_number.ilike(f"%{search}%") |
+            Vendor.name.ilike(f"%{search}%")
+        )
+    if status_filter:
+        query = query.filter(PurchaseOrder.status == status_filter)
+
+    orders = query.order_by(PurchaseOrder.created_at.desc()).paginate(
         page=page, per_page=20
     )
-    return render_template("purchase/orders.html", orders=orders)
+
+    # Compute KPI totals
+    total_purchase_val = db.session.query(db.func.sum(PurchaseOrder.total_amount))\
+        .filter(PurchaseOrder.status.in_(["confirmed", "received", "closed"])).scalar() or 0.0
+    open_orders_cnt = PurchaseOrder.query.filter(PurchaseOrder.status.in_(["draft", "confirmed"])).count()
+    completed_orders_cnt = PurchaseOrder.query.filter(PurchaseOrder.status.in_(["received", "closed"])).count()
+
+    return render_template(
+        "purchase/orders.html",
+        orders=orders,
+        search=search,
+        status_filter=status_filter,
+        total_purchase_val=total_purchase_val,
+        open_orders_cnt=open_orders_cnt,
+        completed_orders_cnt=completed_orders_cnt
+    )
 
 
 @purchase_bp.route("/create", methods=["GET", "POST"])
@@ -34,14 +61,17 @@ def create_order():
     ]
     if form.validate_on_submit():
         purchase_service = PurchaseService()
-        order = purchase_service.create_order(
+        order, err = purchase_service.create_order(
             vendor_id=form.vendor_id.data,
             user_id=current_user.id,
             expected_date=form.expected_date.data,
             notes=form.notes.data,
         )
-        flash(f"Purchase Order {order.order_number} created.", "success")
-        return redirect(url_for("purchase.edit_order", id=order.id))
+        if err:
+            flash(err, "danger")
+        else:
+            flash(f"Purchase Order {order.order_number} created.", "success")
+            return redirect(url_for("purchase.edit_order", id=order.id))
     return render_template("purchase/create_order.html", form=form)
 
 
@@ -105,9 +135,12 @@ def add_line(id):
 @permission_required("confirm_purchases")
 def confirm_order(id):
     purchase_service = PurchaseService()
-    order = purchase_service.confirm_order(id)
-    flash(f"Order {order.order_number} confirmed.", "success")
-    return redirect(url_for("purchase.view_order", id=order.id))
+    order, err = purchase_service.confirm_order(id)
+    if err:
+        flash(err, "danger")
+    else:
+        flash(f"Order {order.order_number} confirmed.", "success")
+    return redirect(url_for("purchase.view_order", id=id))
 
 
 @purchase_bp.route("/<int:id>/receive", methods=["GET", "POST"])
@@ -118,7 +151,10 @@ def receive_order(id):
     if request.method == "POST":
         from app.services.purchase.receiving_service import ReceivingService
         receiving_service = ReceivingService()
-        receiving_service.receive_order(id, current_user.id)
-        flash(f"Order {order.order_number} received.", "success")
+        order, err = receiving_service.receive_order(id, current_user.id)
+        if err:
+            flash(err, "danger")
+        else:
+            flash(f"Order {order.order_number} received.", "success")
         return redirect(url_for("purchase.view_order", id=order.id))
     return render_template("purchase/receive.html", order=order)

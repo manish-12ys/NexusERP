@@ -1,14 +1,39 @@
 {% extends "layouts/base.html" %}
+{% block title %}New Sales Order - NexusERP{% endblock %}
 {% block content %}
-<h4>New Sales Order</h4>
-<div class="card"><div class="card-body">
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">{{ form.customer_id.label }}{{ form.customer_id(class="form-select") }}</div>
-        <div class="mb-3">{{ form.expected_date.label }}{{ form.expected_date(class="form-control", type="date") }}</div>
-        <div class="mb-3">{{ form.notes.label }}{{ form.notes(class="form-control", rows=3) }}</div>
-        {{ form.submit(class="btn btn-primary") }}
-        <a href="{{ url_for('sales.list_orders') }}" class="btn btn-secondary">Cancel</a>
-    </form>
-</div></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <a href="{{ url_for('sales.list_orders') }}" class="btn btn-outline-secondary btn-sm rounded-pill me-3"><i class="bi bi-arrow-left"></i> Cancel</a>
+        <h1 class="h3 mb-0 text-gradient"><i class="bi bi-cart-plus"></i> Create Sales Order</h1>
+    </div>
+</div>
+
+<div class="card shadow border-0 glass-card">
+    <div class="card-body p-4">
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <h5 class="text-secondary font-secondary border-bottom border-secondary border-opacity-25 pb-2 mb-4"><i class="bi bi-info-circle"></i> General Information</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    {{ form.customer_id.label(class="form-label") }}
+                    {{ form.customer_id(class="form-select border-secondary bg-dark text-light") }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.expected_date.label(class="form-label") }}
+                    {{ form.expected_date(class="form-control border-secondary bg-dark text-light", type="date") }}
+                </div>
+                <div class="col-12">
+                    {{ form.notes.label(class="form-label") }}
+                    {{ form.notes(class="form-control border-secondary bg-dark text-light", rows=3, placeholder="Add internal notes or instructions...") }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                {{ form.submit(class="btn btn-primary bg-gradient border-0 px-4 py-2") }}
+                <a href="{{ url_for('sales.list_orders') }}" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

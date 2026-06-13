@@ -1,0 +1,39 @@
+{% extends "layouts/base.html" %}
+{% block title %}Stock Adjustment - NexusERP{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0 glass-card">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-gradient"><i class="bi bi-sliders"></i> Stock Adjustment</h5>
+                <a href="{{ url_for('inventory.stock_view') }}" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-x-lg"></i> Cancel</a>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-secondary small mb-4">Correct stock values manually by applying positive (replenish/correction) or negative (shrinkage/loss) stock quantities.</p>
+                
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.product_id.label(class="form-label font-secondary") }}
+                        {{ form.product_id(class="form-select bg-dark border-secondary text-light") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.quantity.label(class="form-label font-secondary") }}
+                        {{ form.quantity(class="form-control border-secondary bg-dark text-light", placeholder="e.g. 10 or -5") }}
+                        <div class="form-text text-muted small mt-2">Enter positive numbers to increase stock, negative numbers to decrease it.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.reason.label(class="form-label font-secondary") }}
+                        {{ form.reason(class="form-control border-secondary bg-dark text-light", rows=3, placeholder="e.g. Shrinkage audit / physical count correction...") }}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary bg-gradient border-0 px-4 py-2 w-100"><i class="bi bi-check-circle"></i> Apply Stock Adjustment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

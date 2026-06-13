@@ -1,16 +1,52 @@
 {% extends "layouts/base.html" %}
+{% block title %}Receive Goods - {{ order.order_number }} - NexusERP{% endblock %}
 {% block content %}
-<h4>Receive {{ order.order_number }}</h4>
-<div class="card"><div class="card-body">
-    <table class="table table-dark">
-        <thead><tr><th>Product</th><th>Ordered</th><th>Received</th></tr></thead>
-        <tbody>{% for line in order.lines %}
-            <tr><td>{{ line.product.name }}</td><td>{{ line.quantity }}</td><td>{{ line.received_qty }}</td></tr>{% endfor %}
-        </tbody>
-    </table>
-    <form method="POST">
-        <button class="btn btn-primary"><i class="bi bi-inbox"></i> Receive All</button>
-        <a href="{{ url_for('purchase.view_order', id=order.id) }}" class="btn btn-secondary">Cancel</a>
-    </form>
-</div></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <a href="{{ url_for('purchase.view_order', id=order.id) }}" class="btn btn-outline-secondary btn-sm rounded-pill me-3"><i class="bi bi-arrow-left"></i> Cancel</a>
+        <h1 class="h3 mb-0 text-gradient"><i class="bi bi-box-arrow-in-down"></i> Receive Shipments: {{ order.order_number }}</h1>
+    </div>
+</div>
+
+<div class="card shadow border-0 glass-card">
+    <div class="card-body p-4">
+        <h5 class="text-secondary font-secondary border-bottom border-secondary border-opacity-25 pb-2 mb-4"><i class="bi bi-check-circle"></i> Verify Incoming Quantities</h5>
+        <div class="table-responsive mb-4">
+            <table class="table table-dark table-striped align-middle">
+                <thead>
+                    <tr class="font-secondary">
+                        <th>Product / SKU</th>
+                        <th>Ordered Quantity</th>
+                        <th>Previously Received</th>
+                        <th>Remaining to Receive</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in order.lines %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-light">{{ line.product.name }}</div>
+                            <small class="text-secondary">{{ line.product.sku }}</small>
+                        </td>
+                        <td class="text-light">{{ line.quantity }}</td>
+                        <td class="text-secondary">{{ line.received_qty }}</td>
+                        <td>
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 fs-6">
+                                {{ line.quantity - line.received_qty }} units
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <form method="POST">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary bg-gradient border-0 px-4 py-2"><i class="bi bi-inbox-fill"></i> Accept & Receive All</button>
+                <a href="{{ url_for('purchase.view_order', id=order.id) }}" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

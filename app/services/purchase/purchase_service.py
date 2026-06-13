@@ -7,34 +7,37 @@ from datetime import datetime
 
 class PurchaseService:
     @staticmethod
-    def create_order(vendor_id, items, user_id=None):
+    def create_order(vendor_id, items=None, user_id=None, expected_date=None, notes=None):
         order = PurchaseOrder(
             order_number=PurchaseService._generate_order_number(),
             vendor_id=vendor_id,
             user_id=user_id,
+            expected_date=expected_date,
+            notes=notes,
             status="draft",
         )
         db.session.add(order)
         db.session.flush()
 
         subtotal = 0.0
-        for item in items:
-            product = Product.query.get(item["product_id"])
-            if not product:
-                return None, f"Product {item['product_id']} not found"
-            qty = item["quantity"]
-            unit_cost = item.get("unit_cost", product.cost_price)
-            line_total = qty * unit_cost
+        if items:
+            for item in items:
+                product = Product.query.get(item["product_id"])
+                if not product:
+                    return None, f"Product {item['product_id']} not found"
+                qty = item["quantity"]
+                unit_cost = item.get("unit_cost", product.cost_price)
+                line_total = qty * unit_cost
 
-            line = PurchaseOrderLine(
-                purchase_order_id=order.id,
-                product_id=product.id,
-                quantity=qty,
-                unit_cost=unit_cost,
-                line_total=line_total,
-            )
-            db.session.add(line)
-            subtotal += line_total
+                line = PurchaseOrderLine(
+                    purchase_order_id=order.id,
+                    product_id=product.id,
+                    quantity=qty,
+                    unit_cost=unit_cost,
+                    line_total=line_total,
+                )
+                db.session.add(line)
+                subtotal += line_total
 
         order.subtotal = subtotal
         order.total_amount = subtotal

@@ -1,28 +1,108 @@
-{% extends "layouts/base.html" %}
+w{% extends "layouts/base.html" %}
 {% block title %}Stock Ledger - NexusERP{% endblock %}
 {% block content %}
-<h4><i class="bi bi-journal"></i> Stock Ledger</h4>
-<div class="card"><div class="card-body">
-    <form class="mb-3 row g-2" method="GET">
-        <div class="col-auto">
-            <select name="product_id" class="form-select">
-                <option value="">All Products</option>{% for p in products %}
-                <option value="{{ p.id }}" {{ 'selected' if request.args.get('product_id')|int == p.id }}>{{ p.name }}</option>{% endfor %}
-            </select>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <a href="{{ url_for('inventory.stock_view') }}" class="btn btn-outline-secondary btn-sm rounded-pill me-3"><i
+                class="bi bi-arrow-left"></i> Back</a>
+        <h1 class="h3 mb-0 text-gradient"><i class="bi bi-journal-text"></i> Stock Ledger Audit</h1>
+    </div>
+</div>
+
+<div class="card shadow border-0 glass-card mb-4">
+    <div class="card-body p-4">
+        <form class="row g-3 align-items-center" method="GET">
+            <div class="col-md-8">
+                <select name="product_id" class="form-select border-secondary bg-dark text-light">
+                    <option value="">All Products</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {{ 'selected' if request.args.get('product_id')|int==p.id }}>{{ p.name }}
+                        ({{ p.sku }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button class="btn btn-primary bg-gradient border-0 px-3 py-2 w-100" type="submit">Filter
+                    Movements</button>
+                <a href="{{ url_for('inventory.ledger_view') }}" class="btn btn-outline-secondary px-3 py-2">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow border-0 glass-card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-dark table-striped table-hover mb-0 align-middle">
+                <thead>
+                    <tr class="font-secondary">
+                        <th class="px-4 py-3">Timestamp</th>
+                        <th class="py-3">Product</th>
+                        <th class="py-3">Type</th>
+                        <th class="py-3">Quantity</th>
+                        <th class="py-3">Before</th>
+                        <th class="py-3">After</th>
+                        <th class="py-3 px-4">Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in entries.items %}
+                    <tr>
+                        <td class="px-4 py-3 text-secondary small">{{ e.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="fw-bold text-white">{{ e.product.name }}</td>
+                        <td>
+                            {% if e.movement_type == 'adjustment' %}
+                            <span
+                                class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25">Adjustment</span>
+                            {% elif e.movement_type == 'transfer' %}
+                            <span
+                                class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25">Transfer</span>
+                            {% elif e.quantity > 0 %}
+                            <span
+                                class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">{{
+                                e.movement_type }}</span>
+                            {% else %}
+                            <span
+                                class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25">{{
+                                e.movement_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold {% if e.quantity >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ '+' if e.quantity > 0 }}{{ e.quantity }}
+                        </td>
+                        <td class="text-secondary">{{ e.before_qty }}</td>
+                        <td class="text-light fw-medium">{{ e.after_qty }}</td>
+                        <td class="text-secondary small px-4">{{ e.notes or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">No stock movements logged.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filter</button></div>
-    </form>
-    <table class="table table-dark table-sm">
-        <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Ref</th><th>Qty</th><th>Before</th><th>After</th></tr></thead>
-        <tbody>{% for e in entries.items %}
-            <tr>
-                <td>{{ e.created_at.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ e.product.name }}</td>
-                <td><span class="badge bg-{{ 'success' if e.quantity > 0 else 'danger' }}">{{ e.movement_type }}</span></td>
-                <td>{{ e.reference_number or '-' }}</td>
-                <td class="{{ 'text-success' if e.quantity > 0 else 'text-danger' }}">{{ e.quantity }}</td>
-                <td>{{ e.before_qty }}</td><td>{{ e.after_qty }}</td>
-            </tr>{% else %}<tr><td colspan="7" class="text-muted text-center">No entries.</td></tr>{% endfor %}
-        </tbody>
-    </table>
-</div></div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if entries.pages > 1 %}
+<div class="d-flex justify-content-center mt-4">
+    <nav>
+        <ul class="pagination pagination-sm">
+            {% for page_num in entries.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == entries.page %}active{% endif %}">
+                <a class="page-link bg-dark border-secondary text-light {% if page_num == entries.page %}bg-primary{% endif %}"
+                    href="{{ url_for('inventory.ledger_view', page=page_num, product_id=request.args.get('product_id')) }}">{{
+                    page_num }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link bg-dark border-secondary text-muted">...</span></li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
 {% endblock %}

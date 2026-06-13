@@ -65,3 +65,62 @@ def test_product_creation_and_details(client, db):
     assert b"New Brass Bolt" in response.data
     assert b"RAW-BRS-001" in response.data
     assert b"Free To Use" in response.data
+
+
+def test_stock_adjustments_and_transfers(client, db):
+    from app.models.user import User
+    from app.models.role import Role
+    from app.models.product import Product
+    from app.models.inventory import Inventory
+    from app.models.stock_ledger import StockLedger
+    
+    # Setup user
+    role = Role.query.filter_by(name="Inventory Manager").first()
+    user = User(username="inv_test", email="inv_test@test.com", role_id=role.id)
+    user.set_password("pass123")
+    db.session.add(user)
+    
+    # Create product & initial inventory
+    prod = Product(name="Test Gear", sku="RAW-GER-001", is_active=True)
+    db.session.add(prod)
+    db.session.flush()
+    
+    inv = Inventory(product_id=prod.id, on_hand_qty=20.0, reserved_qty=5.0)
+    db.session.add(inv)
+    db.session.commit()
+    
+    client.post("/auth/login", data={"username": "inv_test", "password": "pass123"})
+    
+    # Test Stock Adjustment Route
+    response = client.post("/inventory/adjust", data={
+        "product_id": prod.id,
+        "quantity": 15.0,
+        "reason": "Adjustment Test Notes"
+    }, follow_redirects=True)
+    
+    assert response.status_code == 200
+    assert inv.on_hand_qty == 35.0
+    
+    # Verify Stock Ledger Entry
+    ledger = StockLedger.query.filter_by(product_id=prod.id, movement_type="adjustment").first()
+    assert ledger is not None
+    assert ledger.quantity == 15.0
+    assert ledger.notes == "Adjustment Test Notes"
+    
+    # Test Stock Transfer Route
+    response = client.post("/inventory/transfer", data={
+        "product_id": prod.id,
+        "quantity": 10.0,
+        "to_warehouse": "POS Warehouse",
+        "to_location": "Register Drawer 1"
+    }, follow_redirects=True)
+    
+    assert response.status_code == 200
+    assert inv.warehouse == "POS Warehouse"
+    assert inv.location == "Register Drawer 1"
+    
+    # Verify Stock Ledger Movement for Transfer
+    transfer_ledger = StockLedger.query.filter_by(product_id=prod.id, movement_type="transfer").first()
+    assert transfer_ledger is not None
+    assert "Transferred" in transfer_ledger.notes
+    assert "POS Warehouse" in transfer_ledger.notes
