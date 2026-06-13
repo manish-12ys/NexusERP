@@ -2,6 +2,7 @@ import re
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
+from sqlalchemy import or_
 from app.extensions import db
 from app.models.product import Product
 from app.models.category import Category
@@ -12,6 +13,7 @@ from app.utils.decorators import permission_required
 products_bp = Blueprint("products", __name__, template_folder="../templates/products")
 
 
+# SKU generation helpers
 SKU_PREFIXES = {
     "finished_goods": "FG",
     "raw_material": "RAW",
@@ -42,6 +44,32 @@ def generate_product_sku(product_type, name):
         next_number += 1
 
     return f"{base}-{next_number:03d}"
+
+
+def _product_unique_fields_are_valid(form, product_id=None):
+    sku = (form.sku.data or "").strip()
+    barcode = (form.barcode.data or "").strip()
+    form.sku.data = sku
+    form.barcode.data = barcode or None
+
+    checks = [Product.sku == sku]
+    if barcode:
+        checks.append(Product.barcode == barcode)
+
+    query = Product.query.filter(or_(*checks))
+    if product_id is not None:
+        query = query.filter(Product.id != product_id)
+
+    is_valid = True
+    for product in query.all():
+        if product.sku == sku:
+            form.sku.errors.append("A product with this SKU already exists.")
+            is_valid = False
+        if barcode and product.barcode == barcode:
+            form.barcode.errors.append("A product with this barcode already exists.")
+            is_valid = False
+
+    return is_valid
 
 
 @products_bp.route("/")
@@ -81,7 +109,7 @@ def create_product():
     form.category_id.choices = [
         (c.id, c.name) for c in Category.query.order_by(Category.name).all()
     ]
-    if form.validate_on_submit():
+    if form.validate_on_submit() and _product_unique_fields_are_valid(form):
         product = Product(
             name=form.name.data,
             sku=generate_product_sku(form.product_type.data, form.name.data),
@@ -106,6 +134,8 @@ def create_product():
         db.session.commit()
         flash(f"Product '{product.name}' created.", "success")
         return redirect(url_for("products.list_products"))
+    if form.is_submitted() and form.errors:
+        flash("Please fix the highlighted product details and try again.", "danger")
     return render_template("products/create.html", form=form)
 
 
@@ -118,7 +148,7 @@ def edit_product(id):
     form.category_id.choices = [
         (c.id, c.name) for c in Category.query.order_by(Category.name).all()
     ]
-    if form.validate_on_submit():
+    if form.validate_on_submit() and _product_unique_fields_are_valid(form, product.id):
         product.name = form.name.data
         product.barcode = form.barcode.data
         product.category_id = form.category_id.data
@@ -135,6 +165,8 @@ def edit_product(id):
         db.session.commit()
         flash(f"Product '{product.name}' updated.", "success")
         return redirect(url_for("products.list_products"))
+    if form.is_submitted() and form.errors:
+        flash("Please fix the highlighted product details and try again.", "danger")
     return render_template("products/edit.html", form=form, product=product)
 
 
