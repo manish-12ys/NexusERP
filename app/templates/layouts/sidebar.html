@@ -96,6 +96,9 @@
         <a href="{{ url_for('auth.list_users') }}" class="list-group-item list-group-item-action {% if 'auth.list_users' in request.endpoint %}active{% endif %}">
             <i class="bi bi-person-badge-fill"></i> <span>User Management</span>
         </a>
+        <a href="{{ url_for('auth.settings') }}" class="list-group-item list-group-item-action {% if 'auth.settings' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-gear-fill"></i> <span>Admin Settings</span>
+        </a>
         {% endif %}
     </div>
 </div>

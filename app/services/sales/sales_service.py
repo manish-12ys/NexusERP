@@ -3,6 +3,10 @@ from app.models.sales_order import SalesOrder
 from app.models.sales_order_line import SalesOrderLine
 from app.models.product import Product
 from app.models.audit_log import AuditLog
+from app.models.procurement_request import ProcurementRequest
+from app.models.procurement_rule import ProcurementRule
+from app.models.manufacturing_order import ManufacturingOrder
+from app.services.inventory.stock_service import StockService
 from datetime import datetime
 
 
@@ -55,60 +59,51 @@ class SalesService:
         if order.status != "draft":
             return None, "Only draft orders can be confirmed"
 
-        from app.services.inventory.stock_service import StockService
-        from app.models.procurement_request import ProcurementRequest
-        from app.models.procurement_rule import ProcurementRule
-        from app.models.manufacturing_order import ManufacturingOrder
-
-        pending_supply = False
         messages = []
 
         for line in order.lines.all():
-            success, _ = StockService.reserve_stock(line.product_id, line.quantity)
-            if not success:
-                pending_supply = True
-                product = line.product
-                rule = ProcurementRule.query.filter_by(product_id=product.id, is_active=True).first()
-                if product.procurement_type == "mto" and product.bom:
-                    bom_id = rule.bom_id if rule and rule.bom_id else product.bom.id
-                    mo = ManufacturingOrder(
-                        mo_number=SalesService._generate_manufacturing_number(),
-                        product_id=product.id,
-                        bom_id=bom_id,
-                        quantity=line.quantity,
-                        notes=f"Auto-created for sales order {order.order_number}",
-                    )
-                    db.session.add(mo)
-                    db.session.flush()
-                    request = ProcurementRequest(
-                        request_number=SalesService._generate_procurement_number(),
-                        product_id=product.id,
-                        quantity=line.quantity,
-                        source_type="manufacture",
-                        mo_id=mo.id,
-                        notes=f"Created from sales order {order.order_number}",
-                    )
-                    db.session.add(request)
-                    messages.append(f"Manufacturing order {mo.mo_number} created for {product.name}")
-                else:
-                    request = ProcurementRequest(
-                        request_number=SalesService._generate_procurement_number(),
-                        product_id=product.id,
-                        quantity=line.quantity,
-                        source_type="purchase",
-                        notes=f"Created from sales order {order.order_number}",
-                    )
-                    db.session.add(request)
-                    messages.append(f"Procurement request created for {product.name}")
+            product = line.product
+            inventory = product.inventory
+            available_qty = inventory.free_to_use_qty if inventory else 0.0
+            requested_qty = line.quantity
+            shortage_qty = max(0, requested_qty - available_qty)
 
-        if pending_supply:
-            order.status = "pending_supply"
-            db.session.commit()
-            return order, "; ".join(messages)
+            # Reserve available stock
+            if available_qty > 0:
+                success, _ = StockService.reserve_stock(product.id, available_qty)
+                if not success:
+                    messages.append(f"Could not reserve stock for {product.name}")
+
+            # Create manufacturing order for shortage
+            if shortage_qty > 0:
+                rule = ProcurementRule.query.filter_by(product_id=product.id, is_active=True).first()
+                bom_id = rule.bom_id if rule and rule.bom_id else (product.bom.id if product.bom else None)
+                
+                mo = ManufacturingOrder(
+                    mo_number=SalesService._generate_manufacturing_number(),
+                    product_id=product.id,
+                    bom_id=bom_id,
+                    quantity=shortage_qty,
+                    notes=f"Auto-created for sales order {order.order_number}. Shortage: {shortage_qty} units",
+                )
+                db.session.add(mo)
+                db.session.flush()
+                
+                request = ProcurementRequest(
+                    request_number=SalesService._generate_procurement_number(),
+                    product_id=product.id,
+                    quantity=shortage_qty,
+                    source_type="manufacture",
+                    mo_id=mo.id,
+                    notes=f"Created from sales order {order.order_number}",
+                )
+                db.session.add(request)
+                messages.append(f"Manufacturing order {mo.mo_number} created for {shortage_qty} units of {product.name}")
 
         order.status = "confirmed"
         db.session.commit()
-        return order, None
+        
+        return order, "; ".join(messages) if messages else None
 
     @staticmethod
     def _generate_manufacturing_number():

@@ -129,3 +129,24 @@ def edit_user(user_id):
         flash(f"User {user.username} updated.", "success")
         return redirect(url_for("auth.list_users"))
     return render_template("edit_user.html", user=user, roles=roles)
+
+
+@auth_bp.route("/settings", methods=["GET", "POST"])
+@login_required
+@permission_required("manage_users")
+def settings():
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "delete_all_data":
+            confirmation_code = request.form.get("confirmation_code", "").strip()
+            if confirmation_code.upper() == "DELETE_ALL_DATA":
+                from app.services.admin.data_service import AdminDataService
+                try:
+                    AdminDataService.delete_all_data_except_users()
+                    flash("All business data has been deleted successfully. Users and passwords are preserved.", "success")
+                except Exception as e:
+                    flash(f"Error deleting data: {str(e)}", "danger")
+            else:
+                flash("Confirmation code is incorrect.", "danger")
+            return redirect(url_for("auth.settings"))
+    return render_template("settings.html")
