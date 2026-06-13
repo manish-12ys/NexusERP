@@ -80,7 +80,10 @@ def create_order():
 @permission_required("view_sales")
 def view_order(id):
     order = SalesOrder.query.get_or_404(id)
-    return render_template("sales/view_order.html", order=order)
+    from app.services.risk_service import RiskService
+    risk_service = RiskService()
+    risk_info = risk_service.evaluate_order_risk(order.id)
+    return render_template("sales/view_order.html", order=order, risk_info=risk_info)
 
 
 @sales_bp.route("/<int:id>/edit", methods=["GET", "POST"])

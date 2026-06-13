@@ -11,23 +11,25 @@
 </head>
 <body>
     {% include 'layouts/navbar.html' %}
-    <div class="container-fluid">
-        <div class="row">
-            {% include 'layouts/sidebar.html' %}
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+    <div class="d-flex">
+        {% include 'layouts/sidebar.html' %}
+        <main class="flex-grow-1 animate-fade-in-up delay-2">
+            {% include 'layouts/flash.html' ignore missing %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show glass-card border-{{ category }} mb-4" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="container-fluid p-0">
                 {% block content %}{% endblock %}
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>

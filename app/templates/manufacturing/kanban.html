@@ -1,0 +1,81 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Production Kanban - NexusERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gradient"><i class="bi bi-kanban"></i> Production Kanban Board</h1>
+    <a href="{{ url_for('manufacturing.list_mos') }}" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-list"></i> View MOs</a>
+</div>
+
+<div class="row g-4">
+    <!-- Pending Column -->
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-dark border-top border-3 border-secondary h-100">
+            <div class="card-header bg-transparent border-0 pt-3 pb-0">
+                <h5 class="text-secondary fw-bold mb-0">To Do ({{ board['pending']|length }})</h5>
+            </div>
+            <div class="card-body p-3">
+                {% for wo in board['pending'] %}
+                <div class="card bg-secondary bg-opacity-10 border border-secondary mb-3 shadow-sm">
+                    <div class="card-body p-3">
+                        <h6 class="text-light mb-1">{{ wo.manufacturing_order.mo_number if wo.manufacturing_order else 'Independent' }}</h6>
+                        <p class="text-secondary small mb-2">{{ wo.operation.name if wo.operation else 'Assembly' }}</p>
+                        
+                        <form method="POST" action="{{ url_for('kanban.update_status') }}">
+                            <input type="hidden" name="work_order_id" value="{{ wo.id }}">
+                            <input type="hidden" name="status" value="in_progress">
+                            <button type="submit" class="btn btn-sm btn-primary w-100 bg-gradient border-0">Start Work</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- In Progress Column -->
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-dark border-top border-3 border-primary h-100">
+            <div class="card-header bg-transparent border-0 pt-3 pb-0">
+                <h5 class="text-primary fw-bold mb-0">In Progress ({{ board['in_progress']|length }})</h5>
+            </div>
+            <div class="card-body p-3">
+                {% for wo in board['in_progress'] %}
+                <div class="card bg-primary bg-opacity-10 border border-primary border-opacity-25 mb-3 shadow-sm">
+                    <div class="card-body p-3">
+                        <h6 class="text-light mb-1">{{ wo.manufacturing_order.mo_number if wo.manufacturing_order else 'Independent' }}</h6>
+                        <p class="text-secondary small mb-2">{{ wo.operation.name if wo.operation else 'Assembly' }}</p>
+                        
+                        <form method="POST" action="{{ url_for('kanban.update_status') }}">
+                            <input type="hidden" name="work_order_id" value="{{ wo.id }}">
+                            <input type="hidden" name="status" value="completed">
+                            <button type="submit" class="btn btn-sm btn-success w-100 bg-gradient border-0">Complete Work</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Column -->
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-dark border-top border-3 border-success h-100">
+            <div class="card-header bg-transparent border-0 pt-3 pb-0">
+                <h5 class="text-success fw-bold mb-0">Completed ({{ board['completed']|length }})</h5>
+            </div>
+            <div class="card-body p-3">
+                {% for wo in board['completed'] %}
+                <div class="card bg-success bg-opacity-10 border border-success border-opacity-25 mb-3 shadow-sm opacity-75">
+                    <div class="card-body p-3">
+                        <h6 class="text-light mb-1 text-decoration-line-through">{{ wo.manufacturing_order.mo_number if wo.manufacturing_order else 'Independent' }}</h6>
+                        <p class="text-secondary small mb-0"><i class="bi bi-check-circle-fill text-success"></i> Finished</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

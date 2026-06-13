@@ -1,87 +1,103 @@
 {% if current_user.is_authenticated %}
-<div class="sidebar border-end border-secondary bg-dark" style="width: 220px; min-height: calc(100vh - 56px);">
-    <div class="list-group list-group-flush bg-dark">
+<div class="sidebar glass-card border-0 border-end border-secondary border-opacity-25 animate-fade-in-up delay-1">
+    <div class="list-group list-group-flush pt-4 pb-5 h-100">
+        
+        <!-- Category: Overview -->
+        <div class="px-4 text-uppercase text-muted fw-bold mb-2" style="font-size: 0.65rem; letter-spacing: 0.1em;">Overview</div>
+        
         {% if current_user.has_permission('view_reports') %}
-        <a href="{{ url_for('dashboard.index') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-speedometer2"></i> Dashboard
+        <a href="{{ url_for('dashboard.index') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+            <i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('copilot.index') }}" class="list-group-item list-group-item-action text-info {% if request.endpoint == 'copilot.index' %}active{% endif %}">
+            <i class="bi bi-robot"></i> <span>AI Copilot</span>
         </a>
         {% endif %}
         
+        <div class="px-4 text-uppercase text-muted fw-bold mt-4 mb-2" style="font-size: 0.65rem; letter-spacing: 0.1em;">Operations</div>
+        
         {% if current_user.has_permission('view_products') %}
-        <a href="{{ url_for('products.list_products') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-box"></i> Products
+        <a href="{{ url_for('products.list_products') }}" class="list-group-item list-group-item-action {% if 'products' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-box-seam-fill"></i> <span>Products</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('view_inventory') %}
-        <a href="{{ url_for('inventory.stock_view') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-archive"></i> Inventory
+        <a href="{{ url_for('inventory.stock_view') }}" class="list-group-item list-group-item-action {% if 'inventory' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-inboxes-fill"></i> <span>Inventory</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('view_sales') %}
-        <a href="{{ url_for('sales.list_orders') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-cart"></i> Sales
+        <a href="{{ url_for('sales.list_orders') }}" class="list-group-item list-group-item-action {% if 'sales' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-cart-fill"></i> <span>Sales Orders</span>
         </a>
-        <a href="{{ url_for('customers.list_customers') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-people"></i> Customers
+        <a href="{{ url_for('customers.list_customers') }}" class="list-group-item list-group-item-action {% if 'customers' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-people-fill"></i> <span>Customers</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('view_purchases') %}
-        <a href="{{ url_for('purchase.list_orders') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-truck"></i> Purchases
+        <a href="{{ url_for('purchase.list_orders') }}" class="list-group-item list-group-item-action {% if 'purchase' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-bag-fill"></i> <span>Purchase Orders</span>
         </a>
-        <a href="{{ url_for('vendors.list_vendors') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-shop"></i> Vendors
+        <a href="{{ url_for('vendors.list_vendors') }}" class="list-group-item list-group-item-action {% if 'vendors' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-shop"></i> <span>Vendors</span>
         </a>
         {% endif %}
         
+        <div class="px-4 text-uppercase text-muted fw-bold mt-4 mb-2" style="font-size: 0.65rem; letter-spacing: 0.1em;">Manufacturing</div>
+        
         {% if current_user.has_permission('view_bom') %}
-        <a href="{{ url_for('bom.list_boms') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-diagram-3"></i> BOM
+        <a href="{{ url_for('bom.list_boms') }}" class="list-group-item list-group-item-action {% if 'bom' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-diagram-3-fill"></i> <span>Bill of Materials</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('view_manufacturing') %}
-        <a href="{{ url_for('manufacturing.list_mos') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-gear"></i> Manufacturing
+        <a href="{{ url_for('manufacturing.list_mos') }}" class="list-group-item list-group-item-action {% if 'manufacturing' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-gear-fill"></i> <span>Mfg Orders</span>
         </a>
-        <a href="{{ url_for('workorders.list_workorders') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-list-check"></i> Work Orders
+        <a href="{{ url_for('workorders.list_workorders') }}" class="list-group-item list-group-item-action {% if 'workorders' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-list-check"></i> <span>Work Orders</span>
+        </a>
+        <a href="{{ url_for('kanban.index') }}" class="list-group-item list-group-item-action {% if 'kanban' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-kanban-fill"></i> <span>Production Kanban</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('run_procurement') %}
-        <a href="{{ url_for('procurement.dashboard') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-arrow-repeat"></i> Procurement
+        <a href="{{ url_for('procurement.dashboard') }}" class="list-group-item list-group-item-action {% if 'procurement' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-arrow-repeat"></i> <span>Procurement</span>
         </a>
         {% endif %}
         
+        <div class="px-4 text-uppercase text-muted fw-bold mt-4 mb-2" style="font-size: 0.65rem; letter-spacing: 0.1em;">System</div>
+        
         {% if current_user.has_permission('view_pos') %}
-        <a href="{{ url_for('pos.terminal') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-cash-register"></i> POS
+        <a href="{{ url_for('pos.terminal') }}" class="list-group-item list-group-item-action {% if 'pos' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-cash-register"></i> <span>POS Terminal</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('view_reports') %}
-        <a href="{{ url_for('reports.index') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-file-earmark-bar-graph"></i> Reports
+        <a href="{{ url_for('reports.index') }}" class="list-group-item list-group-item-action {% if 'reports' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-file-earmark-bar-graph-fill"></i> <span>Reports</span>
         </a>
-        <a href="{{ url_for('analytics.dashboard') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-graph-up"></i> Analytics
+        <a href="{{ url_for('analytics.dashboard') }}" class="list-group-item list-group-item-action {% if 'analytics' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-graph-up"></i> <span>Analytics</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('view_audit') %}
-        <a href="{{ url_for('audit.logs') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-journal-text"></i> Audit Logs
+        <a href="{{ url_for('audit.logs') }}" class="list-group-item list-group-item-action {% if 'audit' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-shield-lock-fill"></i> <span>Audit Logs</span>
         </a>
         {% endif %}
 
         {% if current_user.has_permission('manage_users') %}
-        <a href="{{ url_for('auth.list_users') }}" class="list-group-item list-group-item-action bg-dark text-secondary border-secondary">
-            <i class="bi bi-people-fill"></i> Users
+        <a href="{{ url_for('auth.list_users') }}" class="list-group-item list-group-item-action {% if 'auth.list_users' in request.endpoint %}active{% endif %}">
+            <i class="bi bi-person-badge-fill"></i> <span>User Management</span>
         </a>
         {% endif %}
     </div>

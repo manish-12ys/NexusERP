@@ -1,33 +1,52 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary sticky-top">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="{{ url_for('dashboard.index') }}">
-            <i class="bi bi-boxes"></i> NexusERP
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top animate-fade-in-up">
+    <div class="container-fluid px-2">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard.index') }}">
+            <div class="brand-icon-wrapper me-2" style="background: var(--gradient-primary); padding: 8px; border-radius: 12px; box-shadow: var(--shadow-glow-blue);">
+                <i class="bi bi-boxes text-white"></i>
+            </div>
+            <span class="text-gradient tracking-tight">NexusERP</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
+        
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+            <!-- Global Search Bar (Placeholder for aesthetic) -->
+            <div class="ms-auto me-4 d-none d-lg-block position-relative" style="width: 300px;">
+                <i class="bi bi-search position-absolute text-muted" style="left: 15px; top: 50%; transform: translateY(-50%);"></i>
+                <input type="text" class="form-control rounded-pill ps-5 bg-dark border-secondary text-light" placeholder="Search anything... (Ctrl+K)" style="background-color: var(--bg-dark-tertiary) !important;">
+            </div>
+
+            <ul class="navbar-nav">
+                <!-- Notifications Bell -->
+                <li class="nav-item me-3 d-flex align-items-center">
+                    <a class="nav-link position-relative px-2" href="#">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="position-absolute top-25 start-75 translate-middle p-1 bg-danger border border-dark rounded-circle">
+                            <span class="visually-hidden">New alerts</span>
+                        </span>
+                    </a>
+                </li>
+
                 {% if current_user.is_authenticated %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle me-1"></i> {{ current_user.full_name or current_user.username }}
-                        {% if current_user.role %}
-                            {% if current_user.role.name == 'Admin' %}
-                                <span class="badge bg-danger ms-1 small">{{ current_user.role.name }}</span>
-                            {% elif current_user.role.name == 'Business Owner' %}
-                                <span class="badge bg-warning text-dark ms-1 small">{{ current_user.role.name }}</span>
-                            {% elif current_user.role.name == 'Inventory Manager' %}
-                                <span class="badge bg-success ms-1 small">{{ current_user.role.name }}</span>
-                            {% else %}
-                                <span class="badge bg-primary ms-1 small">{{ current_user.role.name }}</span>
-                            {% endif %}
-                        {% endif %}
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.03); border-radius: 50px; border: 1px solid var(--border-glass-light);">
+                        <img src="https://ui-avatars.com/api/?name={{ current_user.full_name or current_user.username }}&background=2563eb&color=fff" class="rounded-circle shadow-sm" width="32" height="32" alt="Avatar">
+                        <div class="d-none d-md-block text-start lh-1">
+                            <span class="d-block text-light fw-medium" style="font-size: 0.9rem;">{{ current_user.full_name or current_user.username }}</span>
+                            <small class="text-muted" style="font-size: 0.75rem;">{{ current_user.role.name if current_user.role else 'User' }}</small>
+                        </div>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end glass-card border-0 mt-3 shadow-lg" style="min-width: 240px; padding: 0.5rem;">
+                        <li class="px-3 py-2 border-bottom border-secondary border-opacity-25 mb-2">
+                            <div class="fw-bold text-light">{{ current_user.full_name or current_user.username }}</div>
+                            <div class="text-muted small">{{ current_user.email }}</div>
+                        </li>
+                        <li><a class="dropdown-item rounded py-2 d-flex align-items-center gap-2 text-secondary hover-bg-light" href="{{ url_for('auth.profile') }}"><i class="bi bi-person"></i> My Profile</a></li>
+                        <li><a class="dropdown-item rounded py-2 d-flex align-items-center gap-2 text-secondary hover-bg-light" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                        <li><hr class="dropdown-divider border-secondary border-opacity-25"></li>
+                        <li><a class="dropdown-item rounded py-2 d-flex align-items-center gap-2 text-danger hover-bg-light" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Sign Out</a></li>
                     </ul>
                 </li>
                 {% endif %}
@@ -35,3 +54,13 @@
         </div>
     </div>
 </nav>
+
+<style>
+.hover-bg-light:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff !important;
+}
+.dropdown-menu {
+    animation: fadeInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+</style>
