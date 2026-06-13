@@ -2,7 +2,7 @@
 
 **NexusERP** is a Flask-based manufacturing ERP built for factory operations that need one connected place for sales, inventory, purchasing, production, POS, reporting, and role-based administration.
 
-The current demo dataset is shaped around a furniture manufacturing workflow: raw materials, finished goods, bills of materials, sales demand, procurement suggestions, manufacturing orders, work orders, and stock movements.
+The current demo dataset is shaped around a furniture manufacturing workflow: raw materials, finished goods, product recipes, sales demand, purchasing suggestions, production orders, production tasks, and stock movements.
 
 ![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.1-000000?logo=flask&logoColor=white)
@@ -20,10 +20,10 @@ NexusERP brings the core factory loop into one web app:
 - **Product and category management** with raw material and finished goods support.
 - **Inventory control** with stock views, adjustments, transfers, low-stock checks, and ledger history.
 - **Sales order workflow** with customers, order lines, confirmation, delivery, and reservation logic.
-- **Purchasing workflow** with vendors, purchase orders, receiving, and stock updates.
-- **Bills of materials** for finished goods costing and production planning.
-- **Manufacturing orders and work orders** for factory execution.
-- **Procurement automation** for reorder, make-to-stock, and make-to-order planning.
+- **Purchasing workflow** with suppliers, purchase orders, receiving, and stock updates.
+- **Product Recipes** for finished goods costing and production planning.
+- **Production orders and production tasks** for factory execution.
+- **Smart Purchasing automation** for reorder, make-to-stock, and make-to-order planning.
 - **Point of sale terminal** for cashier-led retail transactions.
 - **Reports and analytics** with KPI services and Chart.js-powered views.
 - **Audit logs and permissions** for operational traceability.
@@ -146,10 +146,10 @@ Seed data creates operational users for each role.
 | --- | --- | --- | --- |
 | `admin` | `admin123` | Admin | User, role, and full-system management |
 | `owner` | `owner123` | Business Owner | Dashboard, reports, audit visibility |
-| `inventory` | `inventory123` | Inventory Manager | Products, stock, adjustments, procurement |
+| `inventory` | `inventory123` | Inventory Manager | Products, stock, adjustments, smart purchasing |
 | `sales` | `sales123` | Sales User | Customers and sales order flow |
-| `purchase` | `purchase123` | Purchase User | Vendors, purchase orders, receiving |
-| `manufacturing` | `manufacturing123` | Manufacturing User | BOMs, manufacturing orders, work orders |
+| `purchase` | `purchase123` | Purchase User | Suppliers, purchase orders, receiving |
+| `manufacturing` | `manufacturing123` | Manufacturing User | Product Recipes, production orders, production tasks |
 | `cashier` | `cashier123` | POS Cashier | POS terminal |
 
 ---
@@ -166,7 +166,7 @@ Seed data creates operational users for each role.
 | Sales | `/sales/` |
 | Purchases | `/purchase/` |
 | Manufacturing | `/manufacturing/` |
-| Procurement | `/procurement/` |
+| Smart Purchasing | `/procurement/` |
 | POS | `/pos/` |
 | Reports | `/reports/` |
 | Analytics | `/analytics/` |
@@ -223,7 +223,7 @@ The seed scripts create a compact furniture manufacturing dataset, including:
 - Raw materials such as wood legs, table tops, screws, wood polish, planks, and cushions.
 - Finished goods such as dining tables, office chairs, and coffee tables.
 - BOM recipes that calculate component cost for manufactured products.
-- Sample customers, vendors, inventory balances, roles, permissions, and demo users.
+- Sample customers, suppliers, inventory balances, roles, permissions, and demo users.
 
 ---
 

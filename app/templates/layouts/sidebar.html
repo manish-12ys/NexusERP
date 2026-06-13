@@ -42,7 +42,7 @@
             <i class="bi bi-bag-fill"></i> <span>Purchase Orders</span>
         </a>
         <a href="{{ url_for('vendors.list_vendors') }}" class="list-group-item list-group-item-action {% if 'vendors' in request.endpoint %}active{% endif %}">
-            <i class="bi bi-shop"></i> <span>Vendors</span>
+            <i class="bi bi-shop"></i> <span>Suppliers</span>
         </a>
         {% endif %}
         
@@ -50,16 +50,16 @@
         
         {% if current_user.has_permission('view_bom') %}
         <a href="{{ url_for('bom.list_boms') }}" class="list-group-item list-group-item-action {% if 'bom' in request.endpoint %}active{% endif %}">
-            <i class="bi bi-diagram-3-fill"></i> <span>Bill of Materials</span>
+            <i class="bi bi-diagram-3-fill"></i> <span>Product Recipes</span>
         </a>
         {% endif %}
         
         {% if current_user.has_permission('view_manufacturing') %}
         <a href="{{ url_for('manufacturing.list_mos') }}" class="list-group-item list-group-item-action {% if 'manufacturing' in request.endpoint %}active{% endif %}">
-            <i class="bi bi-gear-fill"></i> <span>Mfg Orders</span>
+            <i class="bi bi-gear-fill"></i> <span>Production Orders</span>
         </a>
         <a href="{{ url_for('workorders.list_workorders') }}" class="list-group-item list-group-item-action {% if 'workorders' in request.endpoint %}active{% endif %}">
-            <i class="bi bi-list-check"></i> <span>Work Orders</span>
+            <i class="bi bi-list-check"></i> <span>Production Tasks</span>
         </a>
         <a href="{{ url_for('kanban.index') }}" class="list-group-item list-group-item-action {% if 'kanban' in request.endpoint %}active{% endif %}">
             <i class="bi bi-kanban-fill"></i> <span>Production Kanban</span>
@@ -68,7 +68,7 @@
         
         {% if current_user.has_permission('run_procurement') %}
         <a href="{{ url_for('procurement.dashboard') }}" class="list-group-item list-group-item-action {% if 'procurement' in request.endpoint %}active{% endif %}">
-            <i class="bi bi-arrow-repeat"></i> <span>Procurement</span>
+            <i class="bi bi-arrow-repeat"></i> <span>Smart Purchasing</span>
         </a>
         {% endif %}
         

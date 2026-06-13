@@ -1,9 +1,9 @@
 {% extends "layouts/base.html" %}
-{% block title %}Bill of Materials - NexusERP{% endblock %}
+{% block title %}Product Recipes - NexusERP{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-diagram-3"></i> Bill of Materials</h4>
-    <a href="{{ url_for('bom.create_bom') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New BOM</a>
+    <h4><i class="bi bi-diagram-3"></i> Product Recipes</h4>
+    <a href="{{ url_for('bom.create_bom') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Recipe</a>
 </div>
 <div class="card"><div class="card-body">
     <table class="table table-dark table-hover">
@@ -13,7 +13,7 @@
                 <td>{{ bom.name }}</td><td>{{ bom.product.name }}</td><td>{{ bom.version }}</td><td>{{ bom.quantity }}</td>
                 <td>₹{{ "%.2f"|format(bom.total_cost) }}</td><td>{{ 'Yes' if bom.is_active else 'No' }}</td>
                 <td><a href="{{ url_for('bom.view_bom', id=bom.id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a></td>
-            </tr>{% else %}<tr><td colspan="7" class="text-muted text-center">No BOMs.</td></tr>{% endfor %}
+            </tr>{% else %}<tr><td colspan="7" class="text-muted text-center">No recipes found.</td></tr>{% endfor %}
         </tbody>
     </table>
 </div></div>

@@ -20,7 +20,7 @@ class CustomerForm(FlaskForm):
     state = StringField("State", validators=[Optional(), Length(max=80)])
     pincode = StringField("Pincode", validators=[Optional(), Length(max=20)])
     gst_number = StringField("GST Number", validators=[Optional(), Length(max=30)])
-    credit_limit = FloatField("Credit Limit", default=0.0)
+    credit_limit = FloatField("Maximum Purchase Amount", default=0.0)
     submit = SubmitField("Save")
 
 

@@ -126,13 +126,13 @@
                     </div>
                     <div class="col-6 mt-3">
                         <div class="d-flex justify-content-between align-items-center bg-dark p-3 rounded border border-secondary border-opacity-10">
-                            <span class="text-secondary small">Reorder Level</span>
+                            <span class="text-secondary small">Minimum Stock Amount</span>
                             <span class="fw-bold text-light">{{ product.reorder_level }}</span>
                         </div>
                     </div>
                     <div class="col-6 mt-3">
                         <div class="d-flex justify-content-between align-items-center bg-dark p-3 rounded border border-secondary border-opacity-10">
-                            <span class="text-secondary small">Safety Stock</span>
+                            <span class="text-secondary small">Extra Buffer Stock</span>
                             <span class="fw-bold text-light">{{ product.safety_stock }}</span>
                         </div>
                     </div>
@@ -170,7 +170,7 @@
                                 <span class="badge bg-primary">Auto Replenish</span>
                             </div>
                             <p class="mb-0 small text-secondary">
-                                When inventory falls below the reorder level of <strong>{{ product.reorder_level }}</strong>, the procurement engine will trigger a replenishment order.
+                                When inventory falls below the minimum stock amount of <strong>{{ product.reorder_level }}</strong>, the purchasing system will trigger a replenishment order.
                             </p>
                         </div>
                     </div>

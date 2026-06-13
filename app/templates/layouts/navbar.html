@@ -13,7 +13,7 @@
         
         <div class="collapse navbar-collapse" id="navbarNav">
             <!-- Global Search Bar (Placeholder for aesthetic) -->
-            {% if request.endpoint != 'landing.index' %}
+            {% if request.endpoint not in ['landing.index', 'auth.login', 'auth.register'] %}
             <div class="ms-auto me-4 d-none d-lg-block position-relative" style="width: 300px;">
                 <i class="bi bi-search position-absolute text-muted" style="left: 15px; top: 50%; transform: translateY(-50%);"></i>
                 <input type="text" class="form-control rounded-pill ps-5 bg-dark border-secondary text-light" placeholder="Search anything... (Ctrl+K)" style="background-color: var(--bg-dark-tertiary) !important;">

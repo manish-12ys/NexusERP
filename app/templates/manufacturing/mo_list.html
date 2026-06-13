@@ -1,19 +1,19 @@
 {% extends "layouts/base.html" %}
-{% block title %}Manufacturing Orders - NexusERP{% endblock %}
+{% block title %}Production Orders - NexusERP{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-gear"></i> Manufacturing Orders</h4>
-    <a href="{{ url_for('manufacturing.create_mo') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New MO</a>
+    <h4><i class="bi bi-gear"></i> Production Orders</h4>
+    <a href="{{ url_for('manufacturing.create_mo') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Order</a>
 </div>
 <div class="card"><div class="card-body">
     <table class="table table-dark table-hover">
-        <thead><tr><th>MO</th><th>Product</th><th>Qty</th><th>Produced</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Order</th><th>Product</th><th>Qty</th><th>Produced</th><th>Status</th><th></th></tr></thead>
         <tbody>{% for mo in mos.items %}
             <tr>
                 <td>{{ mo.mo_number }}</td><td>{{ mo.product.name }}</td><td>{{ mo.quantity }}</td><td>{{ mo.produced_qty }}</td>
                 <td><span class="badge bg-{{ 'success' if mo.status == 'completed' else 'info' if mo.status == 'in_progress' else 'warning' if mo.status == 'confirmed' else 'secondary' }}">{{ mo.status }}</span></td>
                 <td><a href="{{ url_for('manufacturing.view_mo', id=mo.id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a></td>
-            </tr>{% else %}<tr><td colspan="6" class="text-muted text-center">No MOs.</td></tr>{% endfor %}
+            </tr>{% else %}<tr><td colspan="6" class="text-muted text-center">No production orders.</td></tr>{% endfor %}
         </tbody>
     </table>
 </div></div>

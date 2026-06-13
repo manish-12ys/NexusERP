@@ -34,8 +34,8 @@ class ProductForm(FlaskForm):
         choices=[("pcs", "Pieces"), ("kg", "Kg"), ("m", "Meter"), ("l", "Liter")],
         default="pcs",
     )
-    reorder_level = FloatField("Reorder Level", default=0.0)
-    safety_stock = FloatField("Safety Stock", default=0.0)
+    reorder_level = FloatField("Minimum Stock Amount", default=0.0)
+    safety_stock = FloatField("Extra Buffer Stock", default=0.0)
     procurement_type = SelectField(
         "Procurement Type",
         choices=[("mts", "Make to Stock"), ("mto", "Make to Order")],

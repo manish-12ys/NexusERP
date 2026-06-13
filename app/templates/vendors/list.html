@@ -2,9 +2,9 @@
 {% block title %}Vendors Directory - NexusERP{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0 text-gradient"><i class="bi bi-shop"></i> Vendors Directory</h1>
+    <h1 class="h3 mb-0 text-gradient"><i class="bi bi-shop"></i> Suppliers Directory</h1>
     {% if current_user.has_permission('create_purchases') %}
-    <a href="{{ url_for('vendors.create_vendor') }}" class="btn btn-primary bg-gradient border-0 px-4 py-2"><i class="bi bi-plus-lg"></i> New Vendor</a>
+    <a href="{{ url_for('vendors.create_vendor') }}" class="btn btn-primary bg-gradient border-0 px-4 py-2"><i class="bi bi-plus-lg"></i> New Supplier</a>
     {% endif %}
 </div>
 
@@ -17,7 +17,7 @@
                     <i class="bi bi-shop fs-3"></i>
                 </div>
                 <div>
-                    <h6 class="text-secondary mb-1">Total Vendors</h6>
+                    <h6 class="text-secondary mb-1">Total Suppliers</h6>
                     <h3 class="mb-0 text-light">{{ vendors.total }}</h3>
                 </div>
             </div>

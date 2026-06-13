@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
-{% block title %}Work Orders - NexusERP{% endblock %}
+{% block title %}Production Tasks - NexusERP{% endblock %}
 {% block content %}
-<h4><i class="bi bi-list-check"></i> Work Orders</h4>
+<h4><i class="bi bi-list-check"></i> Production Tasks</h4>
 <div class="card"><div class="card-body">
     <form class="mb-3" method="GET">
         <select name="status" class="form-select w-auto d-inline" onchange="this.form.submit()">
@@ -12,13 +12,13 @@
         </select>
     </form>
     <table class="table table-dark table-hover">
-        <thead><tr><th>Operation</th><th>MO</th><th>Work Center</th><th>Status</th><th>Progress</th></tr></thead>
+        <thead><tr><th>Operation</th><th>Order</th><th>Work Center</th><th>Status</th><th>Progress</th></tr></thead>
         <tbody>{% for wo in workorders.items %}
             <tr>
                 <td>{{ wo.operation_name }}</td><td>{{ wo.mo.mo_number }}</td><td>{{ wo.work_center.name }}</td>
                 <td><span class="badge bg-{{ 'success' if wo.status == 'completed' else 'info' if wo.status == 'in_progress' else 'secondary' }}">{{ wo.status }}</span></td>
                 <td>{{ wo.completion_percent }}%</td>
-            </tr>{% else %}<tr><td colspan="5" class="text-muted text-center">No work orders.</td></tr>{% endfor %}
+            </tr>{% else %}<tr><td colspan="5" class="text-muted text-center">No production tasks.</td></tr>{% endfor %}
         </tbody>
     </table>
 </div></div>

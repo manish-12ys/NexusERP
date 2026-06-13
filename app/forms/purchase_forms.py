@@ -10,8 +10,8 @@ from wtforms import (
 from wtforms.validators import DataRequired, Optional, Email, Length
 
 
-class VendorForm(FlaskForm):
-    name = StringField("Vendor Name", validators=[DataRequired(), Length(max=200)])
+class SupplierForm(FlaskForm):
+    name = StringField("Supplier Name", validators=[DataRequired(), Length(max=200)])
     contact_person = StringField("Contact Person", validators=[Optional(), Length(max=120)])
     email = StringField("Email", validators=[Optional(), Email()])
     phone = StringField("Phone", validators=[Optional(), Length(max=20)])
@@ -25,8 +25,12 @@ class VendorForm(FlaskForm):
     submit = SubmitField("Save")
 
 
+class VendorForm(SupplierForm):
+    pass
+
+
 class PurchaseOrderForm(FlaskForm):
-    vendor_id = SelectField("Vendor", coerce=int, validators=[DataRequired()])
+    vendor_id = SelectField("Supplier", coerce=int, validators=[DataRequired()])
     expected_date = DateField("Expected Delivery Date", validators=[Optional()])
     notes = TextAreaField("Notes", validators=[Optional()])
     submit = SubmitField("Save")
