@@ -12,13 +12,28 @@
         </select>
     </form>
     <table class="table table-dark table-hover">
-        <thead><tr><th>Operation</th><th>Order</th><th>Work Center</th><th>Status</th><th>Progress</th></tr></thead>
+        <thead><tr><th>Operation</th><th>Order</th><th>Work Center</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
         <tbody>{% for wo in workorders.items %}
             <tr>
                 <td>{{ wo.operation_name }}</td><td>{{ wo.mo.mo_number }}</td><td>{{ wo.work_center.name }}</td>
                 <td><span class="badge bg-{{ 'success' if wo.status == 'completed' else 'info' if wo.status == 'in_progress' else 'secondary' }}">{{ wo.status }}</span></td>
                 <td>{{ wo.completion_percent }}%</td>
-            </tr>{% else %}<tr><td colspan="5" class="text-muted text-center">No production tasks.</td></tr>{% endfor %}
+                <td>
+                    {% if wo.status == 'pending' %}
+                    <form method="POST" action="{{ url_for('workorders.update_status', id=wo.id) }}" class="d-inline">
+                        <input type="hidden" name="status" value="in_progress">
+                        <button class="btn btn-sm btn-primary">Start</button>
+                    </form>
+                    {% elif wo.status == 'in_progress' %}
+                    <form method="POST" action="{{ url_for('workorders.update_status', id=wo.id) }}" class="d-inline">
+                        <input type="hidden" name="status" value="completed">
+                        <button class="btn btn-sm btn-success">Complete</button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted">Done</span>
+                    {% endif %}
+                </td>
+            </tr>{% else %}<tr><td colspan="6" class="text-muted text-center">No production tasks.</td></tr>{% endfor %}
         </tbody>
     </table>
 </div></div>

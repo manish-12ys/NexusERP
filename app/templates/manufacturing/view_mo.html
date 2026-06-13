@@ -2,18 +2,69 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4>{{ mo.mo_number }}</h4>
-    <div>{% if mo.status == 'confirmed' %}
+    <div>{% if mo.status == 'draft' %}
+        <form method="POST" action="{{ url_for('manufacturing.confirm_mo', id=mo.id) }}" class="d-inline">
+            <button class="btn btn-warning"><i class="bi bi-check-circle"></i> Confirm</button>
+        </form>
+    {% elif mo.status == 'confirmed' %}
         <form method="POST" action="{{ url_for('manufacturing.start_mo', id=mo.id) }}" class="d-inline">
             <button class="btn btn-primary"><i class="bi bi-play"></i> Start</button>
-        </form>{% elif mo.status == 'in_progress' %}
+        </form>
+    {% elif mo.status == 'in_progress' %}
         <form method="POST" action="{{ url_for('manufacturing.complete_mo', id=mo.id) }}" class="d-inline">
             <button class="btn btn-success"><i class="bi bi-check-lg"></i> Complete</button>
-        </form>{% endif %}
+        </form>
+    {% endif %}
     </div>
 </div>
 <div class="card"><div class="card-body">
     <p><strong>Product:</strong> {{ mo.product.name }}</p>
     <p><strong>Quantity:</strong> {{ mo.quantity }}</p>
+    <p><strong>Produced Qty:</strong> {{ mo.produced_qty }}</p>
     <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if mo.status == 'completed' else 'info' if mo.status == 'in_progress' else 'warning' if mo.status == 'confirmed' else 'secondary' }}">{{ mo.status }}</span></p>
 </div></div>
+
+{% if mo.work_orders.count() > 0 %}
+<div class="card mt-4"><div class="card-body">
+    <h5 class="mb-3">Production Tasks</h5>
+    <table class="table table-dark table-hover">
+        <thead>
+            <tr>
+                <th>Operation</th>
+                <th>Work Center</th>
+                <th>Sequence</th>
+                <th>Status</th>
+                <th>Progress</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for wo in mo.work_orders.order_by('sequence').all() %}
+            <tr>
+                <td>{{ wo.operation_name }}</td>
+                <td>{{ wo.work_center.name if wo.work_center else 'Unassigned' }}</td>
+                <td>{{ wo.sequence }}</td>
+                <td><span class="badge bg-{{ 'success' if wo.status == 'completed' else 'info' if wo.status == 'in_progress' else 'secondary' }}">{{ wo.status }}</span></td>
+                <td>{{ wo.completion_percent }}%</td>
+                <td>
+                    {% if wo.status == 'pending' %}
+                    <form method="POST" action="{{ url_for('workorders.update_status', id=wo.id) }}" class="d-inline">
+                        <input type="hidden" name="status" value="in_progress">
+                        <button class="btn btn-sm btn-primary">Start</button>
+                    </form>
+                    {% elif wo.status == 'in_progress' %}
+                    <form method="POST" action="{{ url_for('workorders.update_status', id=wo.id) }}" class="d-inline">
+                        <input type="hidden" name="status" value="completed">
+                        <button class="btn btn-sm btn-success">Complete</button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted">Done</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div></div>
+{% endif %}
 {% endblock %}

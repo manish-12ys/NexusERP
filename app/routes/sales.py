@@ -139,7 +139,10 @@ def confirm_order(id):
     sales_service = SalesService()
     order, err = sales_service.confirm_order(id, user_id=current_user.id)
     if err:
-        flash(err, "danger")
+        if order and order.status == "pending_supply":
+            flash(f"Order {order.order_number} is pending supply. {err}", "warning")
+        else:
+            flash(err, "danger")
     else:
         flash(f"Order {order.order_number} confirmed.", "success")
     return redirect(url_for("sales.view_order", id=id))

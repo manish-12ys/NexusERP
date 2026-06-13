@@ -56,17 +56,76 @@ class SalesService:
             return None, "Only draft orders can be confirmed"
 
         from app.services.inventory.stock_service import StockService
+        from app.models.procurement_request import ProcurementRequest
+        from app.models.procurement_rule import ProcurementRule
+        from app.models.manufacturing_order import ManufacturingOrder
+
+        pending_supply = False
+        messages = []
 
         for line in order.lines.all():
             success, _ = StockService.reserve_stock(line.product_id, line.quantity)
             if not success:
-                order.status = "cancelled"
-                db.session.commit()
-                return None, f"Insufficient stock for {line.product.name}"
+                pending_supply = True
+                product = line.product
+                rule = ProcurementRule.query.filter_by(product_id=product.id, is_active=True).first()
+                if product.procurement_type == "mto" and product.bom:
+                    bom_id = rule.bom_id if rule and rule.bom_id else product.bom.id
+                    mo = ManufacturingOrder(
+                        mo_number=SalesService._generate_manufacturing_number(),
+                        product_id=product.id,
+                        bom_id=bom_id,
+                        quantity=line.quantity,
+                        notes=f"Auto-created for sales order {order.order_number}",
+                    )
+                    db.session.add(mo)
+                    db.session.flush()
+                    request = ProcurementRequest(
+                        request_number=SalesService._generate_procurement_number(),
+                        product_id=product.id,
+                        quantity=line.quantity,
+                        source_type="manufacture",
+                        mo_id=mo.id,
+                        notes=f"Created from sales order {order.order_number}",
+                    )
+                    db.session.add(request)
+                    messages.append(f"Manufacturing order {mo.mo_number} created for {product.name}")
+                else:
+                    request = ProcurementRequest(
+                        request_number=SalesService._generate_procurement_number(),
+                        product_id=product.id,
+                        quantity=line.quantity,
+                        source_type="purchase",
+                        notes=f"Created from sales order {order.order_number}",
+                    )
+                    db.session.add(request)
+                    messages.append(f"Procurement request created for {product.name}")
+
+        if pending_supply:
+            order.status = "pending_supply"
+            db.session.commit()
+            return order, "; ".join(messages)
 
         order.status = "confirmed"
         db.session.commit()
         return order, None
+
+    @staticmethod
+    def _generate_manufacturing_number():
+        from app.models.manufacturing_order import ManufacturingOrder
+
+        prefix = "MO"
+        last = ManufacturingOrder.query.order_by(ManufacturingOrder.id.desc()).first()
+        seq = (last.id + 1) if last else 1
+        return f"{prefix}-{datetime.now().strftime('%Y%m')}-{seq:04d}"
+
+    @staticmethod
+    def _generate_procurement_number():
+        prefix = "PR"
+        from app.models.procurement_request import ProcurementRequest
+        last = ProcurementRequest.query.order_by(ProcurementRequest.id.desc()).first()
+        seq = (last.id + 1) if last else 1
+        return f"{prefix}-{datetime.now().strftime('%Y%m')}-{seq:04d}"
 
     @staticmethod
     def _generate_order_number():

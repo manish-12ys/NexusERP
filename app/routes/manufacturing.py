@@ -5,6 +5,7 @@ from app.models.manufacturing_order import ManufacturingOrder
 from app.models.product import Product
 from app.models.bom import Bom
 from app.forms.manufacturing_forms import ManufacturingOrderForm
+from app.services.manufacturing.manufacturing_service import ManufacturingService
 from app.utils.decorators import permission_required
 
 manufacturing_bp = Blueprint(
@@ -65,11 +66,20 @@ def view_mo(id):
 @permission_required("create_manufacturing")
 def start_mo(id):
     mo = ManufacturingOrder.query.get_or_404(id)
-    mo.status = "in_progress"
-    from datetime import datetime
-    mo.start_date = datetime.utcnow()
-    db.session.commit()
+    manufacturing_service = ManufacturingService()
+    manufacturing_service.start_mo(mo.id)
     flash(f"MO {mo.mo_number} started.", "success")
+    return redirect(url_for("manufacturing.view_mo", id=mo.id))
+
+
+@manufacturing_bp.route("/<int:id>/confirm", methods=["POST"])
+@login_required
+@permission_required("create_manufacturing")
+def confirm_mo(id):
+    mo = ManufacturingOrder.query.get_or_404(id)
+    manufacturing_service = ManufacturingService()
+    manufacturing_service.confirm_mo(mo.id)
+    flash(f"MO {mo.mo_number} confirmed.", "success")
     return redirect(url_for("manufacturing.view_mo", id=mo.id))
 
 

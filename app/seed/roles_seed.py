@@ -36,7 +36,9 @@ def seed_roles_and_permissions():
     db.session.flush()
 
     roles_permissions_map = {
-        "Admin": "*",  # Special marker for all permissions
+        "Admin": [
+            "manage_users", "view_reports", "view_audit"
+        ],
         "Sales User": [
             "view_sales", "create_sales", "confirm_sales", "deliver_sales",
             "view_products", "view_inventory"

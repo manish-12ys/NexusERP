@@ -80,6 +80,8 @@ def sessions():
 @login_required
 @permission_required("create_pos")
 def checkout():
+    from app.services.inventory.stock_service import StockService
+
     session = PosSession.query.filter_by(
         user_id=current_user.id, status="open"
     ).first()
@@ -93,6 +95,18 @@ def checkout():
     if not product_ids:
         flash("No items in cart.", "warning")
         return redirect(url_for("pos.terminal"))
+
+    # Validate stock before creating the order
+    for pid, qty in zip(product_ids, quantities):
+        product = Product.query.get(int(pid))
+        qty = float(qty)
+        if not product or not product.inventory or product.inventory.free_to_use_qty < qty:
+            flash(
+                f"Insufficient stock for {product.name if product else 'unknown product'}. Please check inventory or create a procurement request.",
+                "danger",
+            )
+            return redirect(url_for("pos.terminal"))
+
     order = PosOrder(
         order_number=f"POS-ORD-{PosOrder.query.count() + 1:05d}",
         session_id=session.id,
@@ -119,16 +133,19 @@ def checkout():
         db.session.add(line)
         subtotal += line_total
         total_tax += line_tax
+
     order.subtotal = subtotal
     order.tax_amount = total_tax
     order.total_amount = subtotal + total_tax
     session.total_sales += order.total_amount
-    db.session.commit()
-    # Update inventory
+
     for pid, qty in zip(product_ids, quantities):
-        p = Product.query.get(int(pid))
-        if p and p.inventory:
-            p.inventory.on_hand_qty -= float(qty)
+        success, result = StockService.consume_stock(int(pid), float(qty), user_id=current_user.id)
+        if not success:
+            db.session.rollback()
+            flash(result, "danger")
+            return redirect(url_for("pos.terminal"))
+
     db.session.commit()
     return redirect(url_for("pos.receipt", id=order.id))
 

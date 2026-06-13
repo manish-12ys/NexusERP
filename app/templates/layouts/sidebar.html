@@ -58,9 +58,6 @@
         <a href="{{ url_for('manufacturing.list_mos') }}" class="list-group-item list-group-item-action {% if 'manufacturing' in request.endpoint %}active{% endif %}">
             <i class="bi bi-gear-fill"></i> <span>Production Orders</span>
         </a>
-        <a href="{{ url_for('workorders.list_workorders') }}" class="list-group-item list-group-item-action {% if 'workorders' in request.endpoint %}active{% endif %}">
-            <i class="bi bi-list-check"></i> <span>Production Tasks</span>
-        </a>
         <a href="{{ url_for('kanban.index') }}" class="list-group-item list-group-item-action {% if 'kanban' in request.endpoint %}active{% endif %}">
             <i class="bi bi-kanban-fill"></i> <span>Production Kanban</span>
         </a>
