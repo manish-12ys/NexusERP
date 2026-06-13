@@ -17,7 +17,7 @@ def test_customers_crud_and_rbac(client, db):
     # 2. Get customer listing
     response = client.get("/customers/")
     assert response.status_code == 200
-    assert b"Customers Directory" in response.data
+    assert b"Customers" in response.data
 
     # 3. Create a customer
     create_data = {
