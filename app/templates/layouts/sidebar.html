@@ -92,7 +92,7 @@
         </a>
         {% endif %}
 
-        {% if current_user.has_permission('manage_users') %}
+        {% if current_user.has_permission('manage_users') or (current_user.role and current_user.role.name == 'Admin') %}
         <a href="{{ url_for('auth.list_users') }}" class="list-group-item list-group-item-action {% if 'auth.list_users' in request.endpoint %}active{% endif %}">
             <i class="bi bi-person-badge-fill"></i> <span>User Management</span>
         </a>

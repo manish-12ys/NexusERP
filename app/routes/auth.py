@@ -105,7 +105,7 @@ def forgot_password():
     return render_template("forgot_password.html")
 
 
-from app.utils.decorators import permission_required
+from app.utils.decorators import permission_required, admin_required
 
 @auth_bp.route("/users")
 @login_required
@@ -133,8 +133,10 @@ def edit_user(user_id):
 
 @auth_bp.route("/settings", methods=["GET", "POST"])
 @login_required
-@permission_required("manage_users")
 def settings():
+    if not (current_user.has_permission("manage_users") or (current_user.role and current_user.role.name == "Admin")):
+        abort(403)
+
     if request.method == "POST":
         action = request.form.get("action")
         if action == "delete_all_data":
