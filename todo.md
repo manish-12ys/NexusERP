@@ -125,23 +125,23 @@ Track every inventory movement.
 
 ### Inventory Dashboard
 
-* [ ] Stock Summary
-* [ ] Inventory Search
-* [ ] Low Stock Indicator
+* [x] Stock Summary
+* [x] Inventory Search
+* [x] Low Stock Indicator
 
 ### Stock Ledger
 
-* [ ] Movement History
-* [ ] Inward Stock
-* [ ] Outward Stock
-* [ ] Manufacturing Consumption
-* [ ] Manufacturing Production
+* [x] Movement History
+* [x] Inward Stock
+* [x] Outward Stock
+* [x] Manufacturing Consumption
+* [x] Manufacturing Production
 
 ### Inventory Metrics
 
-* [ ] On Hand Qty
-* [ ] Reserved Qty
-* [ ] Free Qty
+* [x] On Hand Qty
+* [x] Reserved Qty
+* [x] Free Qty
 
 ### Deliverable
 
