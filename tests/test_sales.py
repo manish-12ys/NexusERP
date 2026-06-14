@@ -209,3 +209,87 @@ def test_sales_view_confirmed_order_risk_widget(client, db):
     assert response.status_code == 200
     assert b"Delivery Risk Predictor" in response.data
     assert b"Risk Level" in response.data
+
+
+def test_sales_mto_shortage_triggers_mo(client, db):
+    from app.models.user import User
+    from app.models.role import Role
+    from app.models.customer import Customer
+    from app.models.product import Product
+    from app.models.category import Category
+    from app.models.sales_order import SalesOrder
+    from app.models.bom import Bom
+    from app.models.manufacturing_order import ManufacturingOrder
+    from app.services.inventory.inventory_service import InventoryService
+
+    # Setup User
+    role = Role.query.filter_by(name="Sales User").first()
+    user = User(username="sales_mto_rep", email="sales_mto@test.com", role_id=role.id)
+    user.set_password("pass123")
+    db.session.add(user)
+
+    # Setup customer and category
+    customer = Customer(name="Delta Corp", email="delta@test.com")
+    category = Category(name="MTO Goods")
+    db.session.add(customer)
+    db.session.add(category)
+    db.session.commit()
+
+    # Create MTO product
+    product = Product(
+        name="Custom Sofa",
+        sku="FG-SOF-001",
+        category_id=category.id,
+        sales_price=5000.0,
+        cost_price=3000.0,
+        product_type="finished_goods",
+        procurement_type="mto",
+        is_active=True
+    )
+    db.session.add(product)
+    db.session.commit()
+
+    # Add BOM for product (so it qualifies for is_manufacture)
+    bom = Bom(
+        product_id=product.id,
+        name="BOM for Custom Sofa",
+        quantity=1.0,
+        is_active=True
+    )
+    db.session.add(bom)
+
+    # Initialize empty inventory
+    inv = InventoryService.get_or_create_inventory(product.id)
+    inv.on_hand_qty = 0.0
+    inv.reserved_qty = 0.0
+    db.session.commit()
+
+    # Log in
+    client.post("/auth/login", data={"username": "sales_mto_rep", "password": "pass123"})
+
+    # Create Sales Order
+    order = SalesOrder(order_number="SO-MTO-0001", customer_id=customer.id, status="draft")
+    db.session.add(order)
+    db.session.commit()
+
+    # Add line (requesting 2 Custom Sofas)
+    response = client.post(f"/sales/{order.id}/add-line", data={
+        "product_id": product.id,
+        "quantity": 2.0
+    }, follow_redirects=True)
+    assert response.status_code == 200
+
+    # Confirm order (should trigger MO creation due to shortage of 2 units on MTO product)
+    response = client.post(f"/sales/{order.id}/confirm", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Manufacturing order" in response.data or b"confirmed" in response.data
+
+    order = SalesOrder.query.get(order.id)
+    assert order.status == "confirmed"
+
+    # Verify Manufacturing Order is created for quantity 2
+    mo = ManufacturingOrder.query.filter_by(product_id=product.id).first()
+    assert mo is not None
+    assert mo.quantity == 2.0
+    assert "SO-MTO" in mo.notes
+

@@ -1,536 +1,525 @@
-# NexusERP Architecture Specification
+# NexusERP Architecture
 
-## Intelligent Demand-to-Delivery Manufacturing ERP
-
----
-
-# 1. System Architecture
-
-NexusERP follows a layered architecture that separates presentation, application logic, domain services, persistence, and database storage.
-
-```mermaid
-flowchart TD
-
-    UI["Presentation Layer<br/>HTML5 • Bootstrap 5.3 • Jinja2 • JavaScript"]
-
-    ROUTES["API Layer<br/>Flask Blueprints<br/>WTForms Validation<br/>Permission Middleware"]
-
-    SERVICES["Business Service Layer<br/>Sales Service<br/>Inventory Service<br/>Purchase Service<br/>Manufacturing Service<br/>Procurement Engine<br/>Analytics Engine<br/>AI Copilot"]
-
-    MODELS["Data Access Layer<br/>SQLAlchemy ORM Models"]
-
-    DB["Database Layer<br/>SQLite<br/>Alembic Migrations"]
-
-    UI --> ROUTES
-    ROUTES --> SERVICES
-    SERVICES --> MODELS
-    MODELS --> DB
-```
+## Intelligent Demand-to-Delivery Manufacturing Operating System
 
 ---
 
-# 2. Component Architecture
-
-```mermaid
-flowchart LR
-
-    User["User"]
-
-    Dashboard["Dashboard"]
-    Sales["Sales"]
-    Purchase["Purchase"]
-    Inventory["Inventory"]
-    Manufacturing["Manufacturing"]
-    POS["POS"]
-    Reports["Analytics"]
-    AI["AI Copilot"]
-
-    User --> Dashboard
-    User --> Sales
-    User --> Purchase
-    User --> Inventory
-    User --> Manufacturing
-    User --> POS
-    User --> Reports
-    User --> AI
-
-    Sales --> Inventory
-    Purchase --> Inventory
-    Manufacturing --> Inventory
-    Manufacturing --> Purchase
-    Sales --> Manufacturing
-
-    Inventory --> Reports
-    Sales --> Reports
-    Purchase --> Reports
-    Manufacturing --> Reports
-```
-
----
-
-# 3. Folder Structure
+# 1. High-Level System Architecture
 
 ```text
-app/
-│
-├── extensions/
-│   ├── db.py
-│   ├── login_manager.py
-│   ├── bcrypt.py
-│   └── socketio.py
-│
-├── models/
-│   ├── user.py
-│   ├── role.py
-│   ├── permission.py
-│   ├── product.py
-│   ├── inventory.py
-│   ├── stock_ledger.py
-│   ├── sales_order.py
-│   ├── purchase_order.py
-│   ├── bom.py
-│   ├── manufacturing_order.py
-│   └── audit_log.py
-│
-├── routes/
-│   ├── auth/
-│   ├── dashboard/
-│   ├── inventory/
-│   ├── sales/
-│   ├── purchase/
-│   ├── manufacturing/
-│   ├── reports/
-│   ├── pos/
-│   └── ai/
-│
-├── services/
-│   ├── auth/
-│   ├── inventory/
-│   ├── sales/
-│   ├── purchase/
-│   ├── manufacturing/
-│   ├── procurement/
-│   ├── analytics/
-│   ├── audit/
-│   └── ai/
-│
-├── templates/
-├── static/
-├── utils/
-├── migrations/
-└── seed/
+┌─────────────────────────────────────────────────────────────┐
+│                     Presentation Layer                      │
+│                                                             │
+│  • Bootstrap 5.3 UI                                         │
+│  • Jinja Templates                                          │
+│  • Chart.js Dashboards                                      │
+│  • POS Terminal                                             
+│  • AI Copilot Interface                                     │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Application Layer                       │
+│                                                             │
+│  Flask Blueprints                                           │
+│  • Authentication                                           │
+│  • Dashboard                                                │
+│  • Products                                                 │
+│  • Inventory                                                │
+│  • Sales                                                    │
+│  • Procurement                                              │
+│  • Manufacturing                                            │
+│  • POS                                                      │
+│  • Reports                                                  │
+│  • AI Copilot                                               │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Service Layer                          │
+│                                                             │
+│  Auth Service                                               │
+│  Inventory Service                                          │
+│  Sales Service                                              │
+│  Purchase Service                                           │
+│  Manufacturing Service                                      │
+│  Procurement Engine                                         │
+│  POS Service                                                │
+│  Analytics Service                                          │
+│  Audit Service                                              │
+│  AI Copilot Service                                         │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Persistence Layer                       │
+│                                                             │
+│  SQLAlchemy ORM                                             │
+│  Database Models                                            │
+│  Repositories                                               │
+│  Query Services                                             │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Database Layer                        │
+│                                                             │
+│  SQLite                                                     │
+│  Flask-Migrate                                              │
+│  Alembic                                                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-# 4. Database Entity Relationship Diagram
+# 2. Module Architecture
 
-```mermaid
-erDiagram
+```text
+                           NexusERP
+                               │
+      ┌────────────────────────┼────────────────────────┐
+      │                        │                        │
+      ▼                        ▼                        ▼
 
-    USER {
-        int id PK
-        string username
-        string email
-        string password_hash
-    }
+ Product & Inventory      Sales Management      Purchase Management
+      │                        │                        │
+      │                        │                        │
+      ▼                        ▼                        ▼
 
-    ROLE {
-        int id PK
-        string name
-    }
+ Stock Ledger          Sales Orders           Purchase Orders
+ Stock Adjustment      Reservations           Goods Receipts
+ Reorder Rules         Risk Predictor         Supplier Management
 
-    PERMISSION {
-        int id PK
-        string code
-    }
+      └────────────────────────┼────────────────────────┘
+                               │
+                               ▼
 
-    PRODUCT {
-        int id PK
-        string sku
-        string name
-        string barcode
-        float cost_price
-        float sales_price
-    }
+                    Manufacturing Management
 
-    INVENTORY {
-        int id PK
-        int product_id FK
-        int on_hand_qty
-        int reserved_qty
-        int incoming_qty
-        int outgoing_qty
-    }
+                               │
 
-    STOCK_LEDGER {
-        int id PK
-        int product_id FK
-        string movement_type
-        int quantity
-        datetime created_at
-    }
+                ┌──────────────┼──────────────┐
+                │              │              │
 
-    CUSTOMER {
-        int id PK
-        string name
-    }
+                ▼              ▼              ▼
 
-    SALES_ORDER {
-        int id PK
-        string order_number
-        string status
-        float total_amount
-    }
+             BOM          Work Orders      Kanban Board
 
-    SALES_ORDER_LINE {
-        int id PK
-        int quantity
-        float unit_price
-    }
+                               │
+                               ▼
 
-    VENDOR {
-        int id PK
-        string name
-    }
+                        Finished Goods
 
-    PURCHASE_ORDER {
-        int id PK
-        string order_number
-        string status
-    }
+                               │
+                               ▼
 
-    PURCHASE_ORDER_LINE {
-        int id PK
-        int quantity
-        float unit_cost
-    }
+                         Inventory
 
-    BOM {
-        int id PK
-        string name
-    }
+                               │
+                               ▼
 
-    BOM_COMPONENT {
-        int id PK
-        int quantity
-    }
+                        Analytics Layer
 
-    MANUFACTURING_ORDER {
-        int id PK
-        string mo_number
-        string status
-    }
+                               │
+                               ▼
 
-    WORK_ORDER {
-        int id PK
-        string operation_name
-        string status
-    }
+                         AI Copilot
+```
 
-    AUDIT_LOG {
-        int id PK
-        string action
-        string module
-    }
+---
 
-    USER ||--o{ AUDIT_LOG : creates
-    USER }o--o{ ROLE : assigned
-    ROLE }o--o{ PERMISSION : contains
+# 3. Request Flow Architecture
 
-    PRODUCT ||--|| INVENTORY : owns
-    PRODUCT ||--o{ STOCK_LEDGER : generates
-    PRODUCT ||--o{ SALES_ORDER_LINE : sold
-    PRODUCT ||--o{ PURCHASE_ORDER_LINE : purchased
-    PRODUCT ||--o{ BOM_COMPONENT : component
+```text
+User Request
+     │
+     ▼
+Browser UI
+     │
+     ▼
+Flask Blueprint
+     │
+     ▼
+Permission Validation
+     │
+     ▼
+Business Service
+     │
+     ▼
+SQLAlchemy Models
+     │
+     ▼
+SQLite Database
+     │
+     ▼
+Response Returned
+     │
+     ▼
+Dashboard Update
+```
 
-    CUSTOMER ||--o{ SALES_ORDER : places
-    SALES_ORDER ||--o{ SALES_ORDER_LINE : contains
+---
 
-    VENDOR ||--o{ PURCHASE_ORDER : receives
-    PURCHASE_ORDER ||--o{ PURCHASE_ORDER_LINE : contains
+# 4. Inventory Architecture
 
-    BOM ||--o{ BOM_COMPONENT : contains
-    BOM ||--o{ MANUFACTURING_ORDER : used_in
+```text
+                 PRODUCT
 
-    MANUFACTURING_ORDER ||--o{ WORK_ORDER : contains
+                     │
+
+     ┌───────────────┼───────────────┐
+
+     ▼               ▼               ▼
+
+ On-Hand         Reserved        Incoming
+
+     │               │               │
+
+     └───────────────┼───────────────┘
+                     │
+
+                     ▼
+
+              Free To Use
+
+       Free = OnHand - Reserved
+
+                     │
+
+                     ▼
+
+              Stock Ledger
+
+                     │
+
+                     ▼
+
+         Complete Audit Trail
 ```
 
 ---
 
 # 5. Demand-to-Delivery Workflow
 
-```mermaid
-sequenceDiagram
+```text
+Customer Order
+      │
+      ▼
 
-    actor Customer
+Sales Order Created
+      │
+      ▼
 
-    participant Sales
-    participant Inventory
-    participant Manufacturing
-    participant Ledger
+Inventory Check
+      │
+      ├──────── Stock Available ────────┐
+      │                                 │
+      ▼                                 │
 
-    Customer->>Sales: Create Sales Order
+Reserve Inventory                       │
+      │                                 │
+      ▼                                 │
 
-    Sales->>Inventory: Check Stock Availability
+Delivery                                │
+      │                                 │
+      ▼                                 │
 
-    alt Stock Available
+Stock Consumption                       │
+      │                                 │
+      ▼                                 │
 
-        Inventory-->>Sales: Available
+Order Completed                         │
+                                        │
+      └──── Stock Shortage ─────────────┘
+                    │
+                    ▼
 
-        Sales->>Inventory: Reserve Stock
+         Manufacturing Order
 
-        Sales->>Sales: Confirm Order
+                    │
+                    ▼
 
-    else Stock Shortage
+            Product Produced
 
-        Inventory-->>Sales: Shortage
+                    │
+                    ▼
 
-        Sales->>Manufacturing: Create Manufacturing Order
-
-    end
-
-    Sales->>Inventory: Deliver Goods
-
-    Inventory->>Ledger: Record Stock Movement
-
-    Inventory->>Inventory: Reduce On-Hand Quantity
-
-    Sales->>Customer: Complete Delivery
+              Inventory Updated
 ```
 
 ---
 
-# 6. Smart Procurement Workflow
+# 6. Procurement Architecture
 
-```mermaid
-sequenceDiagram
+```text
+Inventory Monitoring
+        │
+        ▼
 
-    participant ProcurementEngine
-    participant Inventory
-    participant PurchaseOrder
-    participant Supplier
+Check Reorder Level
+        │
+        ▼
 
-    loop Scheduled Check
+Below Threshold?
+        │
+   ┌────┴────┐
+   │         │
 
-        ProcurementEngine->>Inventory: Check Reorder Levels
+  No        Yes
+   │         │
+   │         ▼
 
-        alt Below Threshold
+   │   Create Purchase Order
+   │         │
+   │         ▼
 
-            ProcurementEngine->>PurchaseOrder: Generate Draft PO
+   │   Select Supplier
+   │         │
+   │         ▼
 
-        end
+   │   Receive Goods
+   │         │
+   │         ▼
 
-    end
+   │   Update Inventory
+   │
+   ▼
 
-    PurchaseOrder->>Supplier: Send Purchase Order
-
-    Supplier-->>PurchaseOrder: Ship Materials
-
-    PurchaseOrder->>Inventory: Receive Stock
-
-    Inventory->>Inventory: Increase On-Hand Quantity
-
-    Inventory->>Inventory: Reduce Incoming Quantity
+Continue Monitoring
 ```
 
 ---
 
-# 7. Manufacturing Workflow
+# 7. Manufacturing Architecture
 
-```mermaid
-sequenceDiagram
+```text
+Manufacturing Order
+        │
+        ▼
 
-    actor ProductionManager
+Load BOM
+        │
+        ▼
 
-    participant MO
-    participant BOM
-    participant Inventory
-    participant WorkOrder
+Check Components
+        │
+        ▼
 
-    ProductionManager->>MO: Create Manufacturing Order
+Reserve Materials
+        │
+        ▼
 
-    MO->>BOM: Load Components
+Generate Work Orders
+        │
+        ▼
 
-    BOM-->>MO: Components List
+Assembly
+        │
+        ▼
 
-    MO->>Inventory: Check Components
+Painting
+        │
+        ▼
 
-    alt Components Available
+Packaging
+        │
+        ▼
 
-        Inventory-->>MO: Available
+Finished Goods
+        │
+        ▼
 
-        MO->>Inventory: Reserve Components
-
-    else Components Missing
-
-        MO->>Inventory: Trigger Procurement
-
-    end
-
-    MO->>WorkOrder: Generate Tasks
-
-    WorkOrder->>Inventory: Consume Components
-
-    WorkOrder->>MO: Complete Production
-
-    MO->>Inventory: Add Finished Product
-
-    MO->>MO: Mark Completed
+Inventory Update
 ```
 
 ---
 
-# 8. Inventory Movement Architecture
+# 8. POS Architecture
 
-```mermaid
-flowchart LR
+```text
+Cashier Login
+      │
+      ▼
 
-    PurchaseReceipt["Purchase Receipt"]
-    ProductionOutput["Manufacturing Output"]
-    SalesDelivery["Sales Delivery"]
-    StockAdjustment["Stock Adjustment"]
+Open Session
+      │
+      ▼
 
-    Inventory["Inventory Balance"]
+Scan Products
+      │
+      ▼
 
-    Ledger["Stock Ledger"]
+Inventory Validation
+      │
+      ▼
 
-    PurchaseReceipt --> Inventory
-    ProductionOutput --> Inventory
+Calculate Taxes
+      │
+      ▼
 
-    Inventory --> SalesDelivery
+Payment Processing
+      │
+      ▼
 
-    StockAdjustment --> Inventory
+Generate Receipt
+      │
+      ▼
 
-    Inventory --> Ledger
+Update Inventory
+      │
+      ▼
+
+Update Session Sales
+      │
+      ▼
+
+Close Session
 ```
 
 ---
 
-# 9. Role-Based Access Control (RBAC)
+# 9. AI Copilot Architecture
 
-```mermaid
-flowchart TD
+```text
+User Question
+      │
+      ▼
 
-    Admin["System Admin"]
-    Owner["Business Owner"]
-    Sales["Sales Representative"]
-    Purchase["Purchasing Agent"]
-    Inventory["Inventory Manager"]
-    Production["Production Manager"]
-    Cashier["POS Cashier"]
+Intent Parser
+      │
+      ▼
 
-    Permissions["Permissions"]
+Context Builder
+      │
+      ▼
 
-    Admin --> Permissions
-    Owner --> Permissions
-    Sales --> Permissions
-    Purchase --> Permissions
-    Inventory --> Permissions
-    Production --> Permissions
-    Cashier --> Permissions
+ERP Database Queries
+      │
+      ▼
+
+Business Context
+      │
+      ▼
+
+Google Gemini
+      │
+      ▼
+
+Operational Insights
+      │
+      ▼
+
+Recommendations
 ```
 
 ---
 
-# 10. Audit Logging Architecture
+# 10. Security Architecture
 
-```mermaid
-flowchart TD
+```text
+User
+ │
+ ▼
 
-    UserAction["User Action"]
+Authentication
+ │
+ ▼
 
-    Service["Business Service"]
+Role Assignment
+ │
+ ▼
 
-    AuditEngine["Audit Engine"]
+Permission Matrix
+ │
+ ▼
 
-    AuditTable["Audit Log Table"]
+Module Access Control
+ │
+ ▼
 
-    UserAction --> Service
+Business Operations
+ │
+ ▼
 
-    Service --> AuditEngine
-
-    AuditEngine --> AuditTable
+Audit Logging
 ```
 
 ---
 
-# 11. AI Copilot Architecture
+# 11. Audit Trail Architecture
 
-```mermaid
-flowchart TD
+```text
+User Action
+      │
+      ▼
 
-    User["User Query"]
+Business Service
+      │
+      ▼
 
-    Intent["Intent Parser"]
+Change Detection
+      │
+      ▼
 
-    Context["Context Builder"]
+Audit Engine
+      │
+      ▼
 
-    Database["ERP Database"]
+Audit Log Table
+      │
+      ▼
 
-    Gemini["Gemini AI"]
-
-    Response["Business Insights"]
-
-    User --> Intent
-
-    Intent --> Context
-
-    Context --> Database
-
-    Database --> Context
-
-    Context --> Gemini
-
-    Gemini --> Response
+Historical Traceability
 ```
 
 ---
 
-# 12. Complete Module Interaction Diagram
+# 12. Core Database Domains
 
-```mermaid
-flowchart TD
+```text
+Users & Security
+        │
+        ├── Users
+        ├── Roles
+        └── Permissions
 
-    Sales["Sales"]
+Sales
+        │
+        ├── Customers
+        ├── Sales Orders
+        └── Sales Lines
 
-    Purchase["Purchase"]
+Inventory
+        │
+        ├── Products
+        ├── Inventory
+        └── Stock Ledger
 
-    Manufacturing["Manufacturing"]
+Purchasing
+        │
+        ├── Vendors
+        ├── Purchase Orders
+        └── Receipts
 
-    Inventory["Inventory"]
+Manufacturing
+        │
+        ├── BOM
+        ├── Manufacturing Orders
+        └── Work Orders
 
-    Warehouse["Warehouse"]
+POS
+        │
+        ├── Sessions
+        ├── Orders
+        └── Order Lines
 
-    Procurement["Procurement Engine"]
+Analytics
+        │
+        ├── KPIs
+        ├── Metrics
+        └── Reports
 
-    POS["POS"]
-
-    Analytics["Analytics"]
-
-    AI["AI Copilot"]
-
-    Sales --> Inventory
-
-    Inventory --> Procurement
-
-    Procurement --> Purchase
-
-    Purchase --> Inventory
-
-    Manufacturing --> Inventory
-
-    Inventory --> Warehouse
-
-    POS --> Inventory
-
-    Inventory --> Analytics
-
-    Sales --> Analytics
-
-    Purchase --> Analytics
-
-    Manufacturing --> Analytics
-
-    Analytics --> AI
+Audit
+        │
+        └── Audit Logs
 ```
