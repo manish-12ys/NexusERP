@@ -6,7 +6,7 @@ def test_procurement_page(client, db):
     user.set_password("test")
     db.session.add(user)
     db.session.commit()
-    client.post("/auth/login", data={"username": "proc_test", "password": "test"})
+    client.post("/auth/login", data={"username": "proc_test", "password": "test"}, follow_redirects=True)
     response = client.get("/procurement/")
     assert response.status_code == 200
 
@@ -70,7 +70,8 @@ def test_smart_purchasing_engine(client, db):
 
     # 5. Run the procurement engine
     engine = ProcurementEngine()
-    requests_created = engine.run()
+    result = engine.run()
+    requests_created = result["requests_created"] if isinstance(result, dict) else result
     
     # We expect 2 requests to be created
     assert requests_created == 2

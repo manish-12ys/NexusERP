@@ -7,9 +7,15 @@ from app.models.product import Product
 class StockService:
     @staticmethod
     # Reserve stock
-    def reserve_stock(product_id, quantity):
-        # Fetch inventory record for the specified product
-        inv = Inventory.query.filter_by(product_id=product_id).first()
+    def reserve_stock(product_id, quantity, warehouse=None, location=None):
+        # Fetch inventory record for the specified product and location
+        query = Inventory.query.filter_by(product_id=product_id)
+        if warehouse:
+            query = query.filter_by(warehouse=warehouse)
+        if location:
+            query = query.filter_by(location=location)
+        inv = query.first()
+        
         if not inv:
             return False, "No inventory record found"
         # Check if free stock covers the reservation amount
@@ -22,9 +28,15 @@ class StockService:
 
     @staticmethod
     # Release stock
-    def unreserve_stock(product_id, quantity):
-        # Fetch inventory record for the specified product
-        inv = Inventory.query.filter_by(product_id=product_id).first()
+    def unreserve_stock(product_id, quantity, warehouse=None, location=None):
+        # Fetch inventory record for the specified product and location
+        query = Inventory.query.filter_by(product_id=product_id)
+        if warehouse:
+            query = query.filter_by(warehouse=warehouse)
+        if location:
+            query = query.filter_by(location=location)
+        inv = query.first()
+        
         if not inv:
             return False, "No inventory record found"
         # Decrement reserved quantity, ensuring it never goes below zero
@@ -34,9 +46,15 @@ class StockService:
 
     @staticmethod
     # Consume stock
-    def consume_stock(product_id, quantity, user_id=None, commit=True):
-        # Fetch inventory record for the specified product
-        inv = Inventory.query.filter_by(product_id=product_id).first()
+    def consume_stock(product_id, quantity, user_id=None, commit=True, warehouse=None, location=None):
+        # Fetch inventory record for the specified product and location
+        query = Inventory.query.filter_by(product_id=product_id)
+        if warehouse:
+            query = query.filter_by(warehouse=warehouse)
+        if location:
+            query = query.filter_by(location=location)
+        inv = query.first()
+        
         if not inv:
             return False, "No inventory record found"
         # Decrement physical stock and free up the reservation

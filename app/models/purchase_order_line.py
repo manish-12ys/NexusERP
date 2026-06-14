@@ -12,6 +12,9 @@ class PurchaseOrderLine(db.Model):
     tax_percent = db.Column(db.Float, default=0.0)
     received_qty = db.Column(db.Float, default=0.0)
     line_total = db.Column(db.Float, default=0.0)
+    warehouse = db.Column(db.String(80))
+    location = db.Column(db.String(80))
+
 
     def __repr__(self):
         return f"<PurchaseOrderLine {self.product_id} qty={self.quantity}>"

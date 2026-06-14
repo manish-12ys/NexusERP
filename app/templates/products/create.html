@@ -22,6 +22,13 @@
                 <div class="col-md-6">
                     {{ form.category_id.label(class="form-label") }}
                     {{ form.category_id(class="form-select border-secondary bg-dark text-light") }}
+                    {% if not categories %}
+                    <div class="form-text" style="color:var(--color-warning);">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        No categories found.
+                        <a href="{{ url_for('products.create_category') }}" style="color:var(--color-accent);">Create a category first</a>, then come back.
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-4">
                     <label class="form-label" for="sku-preview">SKU</label>

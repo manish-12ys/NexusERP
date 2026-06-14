@@ -161,57 +161,78 @@
             <span style="font-size:14px; font-weight:600; color:var(--color-text-primary);">Inventory Breakdown</span>
         </div>
     </div>
-    <div style="padding:24px; display:flex; flex-direction:column; gap:24px;">
+    <div style="padding:24px;">
+        <div class="inventory-breakdown-container">
+            <div style="display:flex; flex-direction:column; gap:24px;">
+                <!-- On-Hand -->
+                <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:12px; color:var(--color-text-secondary);">On-Hand Stock</span>
+                        <span style="font-family:var(--font-mono); font-size:13px; font-weight:500; color:var(--color-info);">{{ total_on_hand }} units</span>
+                    </div>
+                    <div class="progress" style="height:5px;">
+                        <div class="progress-bar" style="width:100%; background:var(--color-info) !important;"></div>
+                    </div>
+                </div>
 
-        <!-- On-Hand -->
-        <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="font-size:12px; color:var(--color-text-secondary);">On-Hand Stock</span>
-                <span style="font-family:var(--font-mono); font-size:13px; font-weight:500; color:var(--color-info);">{{ total_on_hand }} units</span>
-            </div>
-            <div class="progress" style="height:5px;">
-                <div class="progress-bar" style="width:100%; background:var(--color-info) !important;"></div>
-            </div>
-        </div>
+                <!-- Reserved -->
+                {% set reserved_pct = (total_reserved / total_on_hand * 100) if total_on_hand > 0 else 0 %}
+                <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:12px; color:var(--color-text-secondary);">Reserved for Orders</span>
+                        <span style="font-family:var(--font-mono); font-size:13px; font-weight:500; color:var(--color-warning);">{{ total_reserved }} units</span>
+                    </div>
+                    <div class="progress" style="height:5px;">
+                        <div class="progress-bar bg-warning" style="width:{{ reserved_pct }}%;"></div>
+                    </div>
+                    <div style="text-align:right; margin-top:4px;">
+                        <span style="font-size:10px; color:var(--color-text-dim);">{{ "%.1f"|format(reserved_pct) }}% of total</span>
+                    </div>
+                </div>
 
-        <!-- Reserved -->
-        {% set reserved_pct = (total_reserved / total_on_hand * 100) if total_on_hand > 0 else 0 %}
-        <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="font-size:12px; color:var(--color-text-secondary);">Reserved for Orders</span>
-                <span style="font-family:var(--font-mono); font-size:13px; font-weight:500; color:var(--color-warning);">{{ total_reserved }} units</span>
+                <!-- Free -->
+                {% set free_pct = (total_free / total_on_hand * 100) if total_on_hand > 0 else 0 %}
+                <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:12px; color:var(--color-text-secondary);">Free to Use</span>
+                        <span style="font-family:var(--font-mono); font-size:13px; font-weight:500; color:var(--color-success);">{{ total_free }} units</span>
+                    </div>
+                    <div class="progress" style="height:5px;">
+                        <div class="progress-bar bg-success" style="width:{{ free_pct }}%;"></div>
+                    </div>
+                    <div style="text-align:right; margin-top:4px;">
+                        <span style="font-size:10px; color:var(--color-text-dim);">{{ "%.1f"|format(free_pct) }}% of total</span>
+                    </div>
+                </div>
             </div>
-            <div class="progress" style="height:5px;">
-                <div class="progress-bar bg-warning" style="width:{{ reserved_pct }}%;"></div>
-            </div>
-            <div style="text-align:right; margin-top:4px;">
-                <span style="font-size:10px; color:var(--color-text-dim);">{{ "%.1f"|format(reserved_pct) }}% of total</span>
-            </div>
-        </div>
-
-        <!-- Free -->
-        {% set free_pct = (total_free / total_on_hand * 100) if total_on_hand > 0 else 0 %}
-        <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="font-size:12px; color:var(--color-text-secondary);">Free to Use</span>
-                <span style="font-family:var(--font-mono); font-size:13px; font-weight:500; color:var(--color-success);">{{ total_free }} units</span>
-            </div>
-            <div class="progress" style="height:5px;">
-                <div class="progress-bar bg-success" style="width:{{ free_pct }}%;"></div>
-            </div>
-            <div style="text-align:right; margin-top:4px;">
-                <span style="font-size:10px; color:var(--color-text-dim);">{{ "%.1f"|format(free_pct) }}% of total</span>
+            
+            <div style="position:relative; height:180px; width:100%; display:flex; justify-content:center; align-items:center;">
+                <canvas id="inventoryBreakdownChart"></canvas>
             </div>
         </div>
 
         <!-- Divider + link -->
-        <div style="border-top:1px solid var(--color-border); padding-top:16px;">
+        <div style="border-top:1px solid var(--color-border); padding-top:16px; margin-top:24px;">
             <a href="{{ url_for('inventory.stock_view') }}" style="font-size:12px; color:var(--color-accent); text-decoration:none; display:flex; align-items:center; gap:6px;">
                 View full inventory <i class="bi bi-arrow-right"></i>
             </a>
         </div>
     </div>
 </div>
+
+<style>
+.inventory-breakdown-container {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 32px;
+    align-items: center;
+}
+@media (max-width: 768px) {
+    .inventory-breakdown-container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+</style>
 
 <style>
 .btn-action {
@@ -338,6 +359,96 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Resolve CSS colors dynamically
+    function getThemeColors() {
+        const style = getComputedStyle(document.documentElement);
+        return {
+            sans: style.getPropertyValue('--font-sans').trim() || 'Inter, sans-serif',
+            mono: style.getPropertyValue('--font-mono').trim() || 'monospace',
+            textSec: style.getPropertyValue('--color-text-secondary').trim() || '#a0a0ab',
+            textDim: style.getPropertyValue('--color-text-dim').trim() || '#6b6b78',
+            border: style.getPropertyValue('--color-border').trim() || 'rgba(255, 255, 255, 0.07)',
+            bgSurface: style.getPropertyValue('--color-bg-surface').trim() || '#111113',
+            success: style.getPropertyValue('--color-success').trim() || '#10b981',
+            warning: style.getPropertyValue('--color-warning').trim() || '#f59e0b'
+        };
+    }
+
+    let colors = getThemeColors();
+    const ctx = document.getElementById('inventoryBreakdownChart').getContext('2d');
+    
+    const chartData = {
+        labels: ['Free to Use', 'Reserved for Orders'],
+        datasets: [{
+            data: [{{ total_free }}, {{ total_reserved }}],
+            backgroundColor: [colors.success, colors.warning],
+            borderWidth: 2,
+            borderColor: colors.bgSurface
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: colors.textSec,
+                    font: { family: colors.sans, size: 10, weight: '500' },
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    borderRadius: 2,
+                    padding: 8
+                }
+            },
+            tooltip: {
+                backgroundColor: colors.bgSurface,
+                titleColor: '#fff',
+                bodyColor: colors.textSec,
+                borderColor: colors.border,
+                borderWidth: 1,
+                titleFont: { family: colors.sans, weight: '600' },
+                bodyFont: { family: colors.mono },
+                padding: 10,
+                cornerRadius: 6,
+                callbacks: {
+                    label: function(context) {
+                        return ` ${context.label}: ${context.parsed} units`;
+                    }
+                }
+            }
+        }
+    };
+
+    const myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: chartData,
+        options: chartOptions
+    });
+
+    // Listen for custom theme change event to keep UI completely harmonized
+    document.addEventListener('themechanged', function(e) {
+        const newColors = getThemeColors();
+        
+        myChart.data.datasets[0].borderColor = newColors.bgSurface;
+        myChart.data.datasets[0].backgroundColor = [newColors.success, newColors.warning];
+        
+        myChart.options.plugins.legend.labels.color = newColors.textSec;
+        myChart.options.plugins.tooltip.bodyColor = newColors.textSec;
+        myChart.options.plugins.tooltip.borderColor = newColors.border;
+        myChart.options.plugins.tooltip.backgroundColor = newColors.bgSurface;
+        
+        myChart.update();
+    });
+});
+</script>
 {% endblock %}
 
 

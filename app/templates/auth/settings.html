@@ -8,24 +8,46 @@
 <div class="row">
     <!-- System Settings -->
     <div class="col-lg-8">
-        <div class="card shadow border-0 glass-card mb-4">
-            <div class="card-header bg-dark border-bottom border-secondary p-4">
+        <div class="card mb-4">
+            <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-gear"></i> System Settings</h5>
             </div>
             <div class="card-body p-4">
                 <div class="alert alert-info" role="alert">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <strong>System Information</strong><br>
-                    This section contains critical system settings. Handle with care.
+                    <i class="bi bi-info-circle" style="font-size: 1.25rem; align-self: flex-start; margin-top: 2px;"></i>
+                    <div>
+                        <strong style="font-size: 0.95rem; display: block; margin-bottom: 2px;">System Information</strong>
+                        <span style="opacity: 0.9; font-size: 0.85rem;">This section contains critical system settings. Handle with care.</span>
+                    </div>
+                </div>
+
+                <hr class="my-4" style="border-top: 1px solid var(--color-border);">
+                
+                <div class="row align-items-center">
+                    <div class="col-md-7">
+                        <label class="form-label fw-bold mb-1" style="color: var(--color-text-primary);">System Color Mode</label>
+                        <p class="text-muted small mb-0">Choose your preferred visual theme for the NexusERP interface.</p>
+                    </div>
+                    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                        <div class="btn-group" role="group" aria-label="Color Mode Selection" style="border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; padding: 2px; background: var(--color-bg-elevated); display: inline-flex;">
+                            <button type="button" class="btn btn-sm" id="btn-theme-light" onclick="setThemeExplicit('light')" style="border: none; border-radius: calc(var(--radius-md) - 2px); transition: all var(--transition-base); font-weight: 500; font-size: var(--text-sm); height: 32px; padding: 0 16px;">
+                                <i class="bi bi-sun-fill me-1"></i> Light
+                            </button>
+                            <button type="button" class="btn btn-sm" id="btn-theme-dark" onclick="setThemeExplicit('dark')" style="border: none; border-radius: calc(var(--radius-md) - 2px); transition: all var(--transition-base); font-weight: 500; font-size: var(--text-sm); height: 32px; padding: 0 16px;">
+                                <i class="bi bi-moon-stars-fill me-1"></i> Dark
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Data Management -->
-        <div class="card shadow border-0 glass-card border-danger">
-            <div class="card-header bg-dark border-bottom border-danger p-4">
+        <div class="card" style="border-color: var(--color-danger) !important;">
+            <div class="card-header" style="border-bottom-color: rgba(239, 68, 68, 0.3) !important;">
                 <h5 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Data Management</h5>
             </div>
+
             <div class="card-body p-4">
                 <h6 class="mb-3">Delete All Business Data</h6>
                 <p class="text-muted mb-3">
@@ -42,8 +64,11 @@
                     <li>Audit Logs & Notifications</li>
                 </ul>
                 <div class="alert alert-warning" role="alert">
-                    <i class="bi bi-shield-exclamation me-2"></i>
-                    <strong>Important:</strong> User accounts and passwords will be preserved. This action cannot be undone!
+                    <i class="bi bi-shield-exclamation" style="font-size: 1.25rem; align-self: flex-start; margin-top: 2px;"></i>
+                    <div>
+                        <strong style="font-size: 0.95rem; display: block; margin-bottom: 2px;">Important</strong>
+                        <span style="opacity: 0.9; font-size: 0.85rem;">User accounts and passwords will be preserved. This action cannot be undone!</span>
+                    </div>
                 </div>
                 
                 <form method="POST" action="{{ url_for('auth.settings') }}">
@@ -61,10 +86,11 @@
 
     <!-- Quick Links Sidebar -->
     <div class="col-lg-4">
-        <div class="card shadow border-0 glass-card">
-            <div class="card-header bg-dark border-bottom border-secondary p-4">
+        <div class="card">
+            <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Quick Links</h5>
             </div>
+
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
                     <a href="{{ url_for('auth.list_users') }}" class="list-group-item list-group-item-action d-flex align-items-center p-3">
@@ -94,4 +120,57 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setThemeExplicit(theme) {
+    var html = document.documentElement;
+    html.setAttribute('data-theme', theme);
+    html.setAttribute('data-bs-theme', theme);
+    localStorage.setItem('nexus-theme', theme);
+
+    // Update the header toggle icon
+    var icon = document.getElementById('theme-icon');
+    if (icon) {
+        icon.className = theme === 'light' ? 'bi bi-moon' : 'bi bi-sun';
+    }
+
+    // Update settings page buttons active state
+    updateThemeButtons(theme);
+
+    // Dispatch custom event for theme-aware charts to update
+    document.dispatchEvent(new CustomEvent('themechanged', { detail: { theme: theme } }));
+}
+
+function updateThemeButtons(theme) {
+    var btnLight = document.getElementById('btn-theme-light');
+    var btnDark = document.getElementById('btn-theme-dark');
+    if (btnLight && btnDark) {
+        if (theme === 'light') {
+            btnLight.style.background = 'var(--color-bg-surface)';
+            btnLight.style.color = 'var(--color-accent)';
+            btnLight.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            
+            btnDark.style.background = 'transparent';
+            btnDark.style.color = 'var(--color-text-dim)';
+            btnDark.style.boxShadow = 'none';
+        } else {
+            btnDark.style.background = 'var(--color-bg-surface)';
+            btnDark.style.color = 'var(--color-accent)';
+            btnDark.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+            
+            btnLight.style.background = 'transparent';
+            btnLight.style.color = 'var(--color-text-dim)';
+            btnLight.style.boxShadow = 'none';
+        }
+    }
+}
+
+// Initial setup on load
+(function() {
+    var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    updateThemeButtons(theme);
+})();
+</script>
 {% endblock %}

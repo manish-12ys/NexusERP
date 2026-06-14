@@ -13,12 +13,18 @@
         <p class="page-subtitle">Live stock levels across all locations</p>
     </div>
     <div class="page-actions">
+        <a href="{{ url_for('inventory.warehouses_view') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-houses"></i> Warehouses
+        </a>
         {% if current_user.has_permission('adjust_inventory') %}
         <a href="{{ url_for('inventory.adjust_stock') }}" class="btn btn-outline-secondary">
             <i class="bi bi-sliders"></i> Adjust
         </a>
         <a href="{{ url_for('inventory.stock_transfer') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left-right"></i> Transfer
+        </a>
+        <a href="{{ url_for('inventory.list_transfers') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history"></i> Transfers Log
         </a>
         {% endif %}
         <a href="{{ url_for('inventory.ledger_view') }}" class="btn btn-outline-secondary">

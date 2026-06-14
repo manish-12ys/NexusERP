@@ -94,15 +94,15 @@
    ============================================================ */
 
 [data-theme="light"] {
-  /* Backgrounds — white layered system */
-  --color-bg-base:     #f2f2f5;
-  --color-bg-surface:  #ffffff;
-  --color-bg-elevated: #f7f7fa;
-  --color-bg-overlay:  #ebebf0;
+  /* Backgrounds — warm stone/khaki, clearly NOT white */
+  --color-bg-base:     #dbd6cf;
+  --color-bg-surface:  #e5e0d8;
+  --color-bg-elevated: #ece8e1;
+  --color-bg-overlay:  #cec8c0;
 
-  /* Borders — dark hairlines on white */
-  --color-border:        rgba(0, 0, 0, 0.08);
-  --color-border-strong: rgba(0, 0, 0, 0.15);
+  /* Borders — warm tan hairlines, more visible on deeper bg */
+  --color-border:        rgba(90, 75, 55, 0.20);
+  --color-border-strong: rgba(90, 75, 55, 0.35);
   --color-border-focus:  #6366f1;
 
   /* Accent stays indigo — works on both modes */
@@ -111,20 +111,20 @@
   --color-accent-dim:   rgba(99, 102, 241, 0.10);
   --color-accent-glow:  rgba(99, 102, 241, 0.20);
 
-  /* Semantic — same vivid colors, slightly stronger dim */
-  --color-success:       #059669;
-  --color-success-dim:   rgba(5, 150, 105, 0.10);
-  --color-warning:       #d97706;
-  --color-warning-dim:   rgba(217, 119, 6, 0.10);
-  --color-danger:        #dc2626;
-  --color-danger-dim:    rgba(220, 38, 38, 0.10);
-  --color-info:          #0284c7;
-  --color-info-dim:      rgba(2, 132, 199, 0.10);
+  /* Semantic — slightly desaturated for comfort on warm bg */
+  --color-success:       #0d9066;
+  --color-success-dim:   rgba(13, 144, 102, 0.10);
+  --color-warning:       #b45309;
+  --color-warning-dim:   rgba(180, 83, 9, 0.10);
+  --color-danger:        #c0392b;
+  --color-danger-dim:    rgba(192, 57, 43, 0.10);
+  --color-info:          #0369a1;
+  --color-info-dim:      rgba(3, 105, 161, 0.10);
 
-  /* Text — near-black hierarchy */
-  --color-text-primary:   #0f0f13;
-  --color-text-secondary: #44444f;
-  --color-text-dim:       #8b8b9a;
+  /* Text — warm near-charcoal, not harsh black */
+  --color-text-primary:   #2c2620;
+  --color-text-secondary: #5a5048;
+  --color-text-dim:       #9a8e84;
 }
 
 /* ============================================================
@@ -176,19 +176,60 @@ body {
    classes that need an explicit override in light mode.
    ============================================================ */
 
-/* Bootstrap table dark — transparent in both modes */
-[data-theme="light"] .table-dark,
-[data-theme="light"] .table-dark > :not(caption) > * > * {
-  --bs-table-bg: transparent !important;
-  background: transparent !important;
-  color: var(--color-text-primary) !important;
+/* Bootstrap table-dark: full override for light mode */
+/* Resets every CSS variable Bootstrap sets for dark tables */
+[data-theme="light"] .table-dark {
+  --bs-table-color:         var(--color-text-primary) !important;
+  --bs-table-bg:            var(--color-bg-surface) !important;
+  --bs-table-border-color:  var(--color-border) !important;
+  --bs-table-striped-bg:    var(--color-bg-elevated) !important;
+  --bs-table-striped-color: var(--color-text-primary) !important;
+  --bs-table-active-bg:     var(--color-bg-overlay) !important;
+  --bs-table-active-color:  var(--color-text-primary) !important;
+  --bs-table-hover-bg:      var(--color-bg-overlay) !important;
+  --bs-table-hover-color:   var(--color-text-primary) !important;
+  color:            var(--color-text-primary) !important;
+  background-color: var(--color-bg-surface) !important;
+  border-color:     var(--color-border) !important;
+}
+/* Every descendant — thead, tbody, tfoot, tr, th, td */
+[data-theme="light"] .table-dark > *,
+[data-theme="light"] .table-dark > * > *,
+[data-theme="light"] .table-dark > * > * > *,
+[data-theme="light"] .table-dark thead,
+[data-theme="light"] .table-dark tbody,
+[data-theme="light"] .table-dark tfoot,
+[data-theme="light"] .table-dark tr,
+[data-theme="light"] .table-dark th,
+[data-theme="light"] .table-dark td {
+  background-color: transparent !important;
+  color:            var(--color-text-primary) !important;
+  border-color:     var(--color-border) !important;
+}
+/* thead: slightly elevated to distinguish from body */
+[data-theme="light"] .table-dark thead th,
+[data-theme="light"] .table-dark thead td {
+  background-color: var(--color-bg-overlay) !important;
+  color:            var(--color-text-secondary) !important;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+/* Striped rows */
+[data-theme="light"] .table-dark.table-striped tbody tr:nth-of-type(odd) > * {
+  background-color: var(--color-bg-elevated) !important;
+  color:            var(--color-text-primary) !important;
+}
+/* Hover rows */
+[data-theme="light"] .table-dark.table-hover tbody tr:hover > * {
+  background-color: var(--color-bg-overlay) !important;
+  color:            var(--color-text-primary) !important;
 }
 
 /* Dropdown menus */
 [data-theme="light"] .dropdown-menu {
   background: var(--color-bg-surface) !important;
   border-color: var(--color-border-strong) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+  box-shadow: 0 8px 32px rgba(60, 45, 25, 0.14) !important;
 }
 
 /* SKU badge — swap sky to a deeper blue on white */
@@ -225,11 +266,86 @@ body {
 
 /* Scrollbar thumb — darker in light mode */
 [data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.15);
+  background: rgba(90, 75, 55, 0.28);
 }
 
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,0,0,0.25);
+  background: rgba(90, 75, 55, 0.45);
+}
+
+/* ============================================================
+   LIGHT MODE: BOOTSTRAP DARK UTILITY OVERRIDES
+   Catches every hardcoded bg-dark / text-light / border-secondary
+   Bootstrap class used across templates, so light mode looks
+   cohesive without editing 80+ template files.
+   ============================================================ */
+
+/* bg-dark -> surface bg */
+[data-theme="light"] .bg-dark {
+  background-color: var(--color-bg-surface) !important;
+}
+[data-theme="light"] .bg-dark-subtle {
+  background-color: var(--color-bg-elevated) !important;
+}
+
+/* text-light / text-white -> primary text */
+[data-theme="light"] .text-light,
+[data-theme="light"] .text-white {
+  color: var(--color-text-primary) !important;
+}
+[data-theme="light"] .text-muted,
+[data-theme="light"] .text-secondary {
+  color: var(--color-text-secondary) !important;
+}
+
+/* border-secondary on dark inputs -> warm border */
+[data-theme="light"] .border-secondary {
+  border-color: var(--color-border-strong) !important;
+}
+
+/* input-group-text with bg-dark */
+[data-theme="light"] .input-group-text.bg-dark {
+  background-color: var(--color-bg-overlay) !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-border-strong) !important;
+}
+
+/* form-control with bg-dark text-light */
+[data-theme="light"] .form-control.bg-dark,
+[data-theme="light"] .form-select.bg-dark {
+  background-color: var(--color-bg-elevated) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-strong) !important;
+}
+[data-theme="light"] .form-control.bg-dark::placeholder {
+  color: var(--color-text-dim) !important;
+}
+[data-theme="light"] .form-control.bg-dark:focus,
+[data-theme="light"] .form-select.bg-dark:focus {
+  background-color: var(--color-bg-surface) !important;
+  border-color: var(--color-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important;
+}
+
+/* page-link with bg-dark */
+[data-theme="light"] .page-link.bg-dark,
+[data-theme="light"] .page-item .page-link.bg-dark {
+  background-color: var(--color-bg-elevated) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* badge text-bg-dark */
+[data-theme="light"] .text-bg-dark {
+  background-color: var(--color-bg-overlay) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* modal, offcanvas, card dark variants */
+[data-theme="light"] .modal-content,
+[data-theme="light"] .offcanvas {
+  background-color: var(--color-bg-surface) !important;
+  color: var(--color-text-primary) !important;
 }
 
 
@@ -372,8 +488,8 @@ a:hover { color: var(--color-accent-hover); }
   width: 32px;
   height: 32px;
   border-radius: var(--radius-md);
-  border: none;
-  background: transparent;
+  border: none !important;
+  background: transparent !important;
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
@@ -381,8 +497,12 @@ a:hover { color: var(--color-accent-hover); }
   cursor: pointer;
   transition: all var(--transition-base);
   position: relative;
-  font-size: 15px;
+  font-size: 1.15rem !important;
   text-decoration: none;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .navbar-icon-btn:hover {
@@ -1065,10 +1185,11 @@ textarea.form-control { height: auto; min-height: 100px; }
   gap: var(--space-3);
 }
 
-.alert-success { background: var(--color-success-dim) !important; border-color: rgba(16,185,129,0.25) !important; color: #34d399 !important; }
-.alert-danger  { background: var(--color-danger-dim)  !important; border-color: rgba(239,68,68,0.25)   !important; color: #f87171 !important; }
-.alert-warning { background: var(--color-warning-dim) !important; border-color: rgba(245,158,11,0.25)  !important; color: #fbbf24 !important; }
-.alert-info    { background: var(--color-info-dim)    !important; border-color: rgba(56,189,248,0.25)  !important; color: #7dd3fc !important; }
+.alert-success { background: var(--color-success-dim) !important; border-color: rgba(16,185,129,0.25) !important; color: var(--color-success) !important; }
+.alert-danger  { background: var(--color-danger-dim)  !important; border-color: rgba(239,68,68,0.25)   !important; color: var(--color-danger) !important; }
+.alert-warning { background: var(--color-warning-dim) !important; border-color: rgba(245,158,11,0.25)  !important; color: var(--color-warning) !important; }
+.alert-info    { background: var(--color-info-dim)    !important; border-color: rgba(56,189,248,0.25)  !important; color: var(--color-info) !important; }
+
 
 /* ============================================================
    DROPDOWN MENUS
@@ -1232,3 +1353,23 @@ body.login-page {
   align-items: stretch;
   min-height: 100vh;
 }
+
+/* ============================================================
+   LIST GROUPS & QUICK LINKS
+   ============================================================ */
+.list-group-item {
+  background: var(--color-bg-surface) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+  transition: background var(--transition-base), color var(--transition-base);
+}
+
+.list-group-item:hover {
+  background: var(--color-bg-elevated) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.list-group-item .fw-bold {
+  color: var(--color-text-primary) !important;
+}
+

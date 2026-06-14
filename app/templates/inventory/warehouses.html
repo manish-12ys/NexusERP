@@ -1,0 +1,472 @@
+{% extends "layouts/base.html" %}
+{% block title %}Warehouse Management — NexusERP{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header animate-fade-up">
+    <div class="page-header-left">
+        <h1 class="page-title">
+            <i class="bi bi-houses"></i>
+            Warehouse Management
+        </h1>
+        <p class="page-subtitle">Track and replenish stock across different phases and locations</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ url_for('inventory.stock_view') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-inboxes"></i> Stock Levels
+        </a>
+        {% if current_user.has_permission('adjust_inventory') %}
+        <a href="{{ url_for('inventory.stock_transfer') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left-right"></i> Transfer Stock
+        </a>
+        <a href="{{ url_for('inventory.list_transfers') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history"></i> Transfers Log
+        </a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWarehouseModal">
+            <i class="bi bi-plus-lg"></i> Add Warehouse
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Smart Inter-Phase Replenishments -->
+<div class="card mb-4 border-accent animate-fade-up delay-1" style="border-left: 4px solid var(--color-accent) !important;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-gradient"><i class="bi bi-lightning-charge-fill"></i> Smart Inter-Phase Replenishments</h5>
+        <span class="badge bg-primary-dim text-accent font-mono">{{ recommendations|length }} suggested</span>
+    </div>
+    <div class="card-body p-4">
+        {% if recommendations %}
+        <p class="text-muted mb-4 small">
+            The following items are low in one phase/location but have a surplus in another phase within the same warehouse.
+        </p>
+        <div class="table-responsive">
+            <table class="table align-middle" style="margin-bottom:0;">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>From (Surplus Phase)</th>
+                        <th>To (Low Stock Phase)</th>
+                        <th>Transfer Qty</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in recommendations %}
+                    <tr>
+                        <td>
+                            <strong style="color:var(--color-text-primary);">{{ rec.product_name }}</strong>
+                            <div class="sku-badge mt-1">{{ rec.product_sku }}</div>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-dark"><i class="bi bi-house-door me-1"></i>{{ rec.warehouse }}</span>
+                        </td>
+                        <td>
+                            <span class="text-success fw-bold">{{ rec.from_location }}</span>
+                            <div class="text-muted small">Avail: {{ rec.source_qty }}</div>
+                        </td>
+                        <td>
+                            <span class="text-danger fw-bold">{{ rec.to_location }}</span>
+                            <div class="text-muted small">Current: {{ rec.dest_qty }} / Min: {{ rec.safety_stock }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success-dim text-success font-mono" style="font-size: 13px; font-weight: 600; padding: 4px 8px;">
+                                {{ rec.quantity }} units
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ url_for('inventory.execute_replenishment') }}" style="display:inline;">
+                                <input type="hidden" name="product_id" value="{{ rec.product_id }}">
+                                <input type="hidden" name="warehouse" value="{{ rec.warehouse }}">
+                                <input type="hidden" name="from_location" value="{{ rec.from_location }}">
+                                <input type="hidden" name="to_location" value="{{ rec.to_location }}">
+                                <input type="hidden" name="quantity" value="{{ rec.quantity }}">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-arrow-right-short"></i> Quick Transfer
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="bi bi-check2-circle text-success" style="font-size: 2.5rem; margin-bottom: 12px; display: block;"></i>
+            <div class="empty-state-title">All Warehouse Phases adequately Stocked</div>
+            <div class="empty-state-desc">No internal transfer opportunities detected. All phases are above safety levels.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Warehouse Details Grid -->
+<div class="row animate-fade-up delay-2">
+    {% for wh in warehouses %}
+    {% set outer_loop = loop %}
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0"><i class="bi bi-house-door"></i> {{ wh.name }} Warehouse</h5>
+                    <small class="text-muted font-mono" style="font-size:11px; margin-left: 24px;">Code: {{ wh.code }}</small>
+                    {% if wh.address %}
+                    <small class="text-muted d-block mt-1" style="font-size:11px; margin-left: 24px;"><i class="bi bi-geo-alt"></i> {{ wh.address }}</small>
+                    {% endif %}
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="text-muted small text-end me-2 d-none d-md-block" style="font-size: 11px; line-height: 1.2;">
+                        <span class="d-block"><strong>{{ wh.unique_products }}</strong> SKUs</span>
+                        <span class="d-block"><strong>{{ wh.total_on_hand }}</strong> units</span>
+                    </div>
+                    {% if current_user.has_permission('adjust_inventory') %}
+                    <button class="btn btn-sm btn-outline-secondary" 
+                            style="padding: 2px 6px;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editWarehouseModal" 
+                            data-id="{{ wh.id }}" 
+                            data-name="{{ wh.name }}" 
+                            data-code="{{ wh.code }}" 
+                            data-address="{{ wh.address or '' }}"
+                            title="Edit Warehouse">
+                        <i class="bi bi-pencil" style="font-size: 12px;"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" 
+                            style="padding: 2px 8px; font-size: 12px;"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#addLocationModal" 
+                            data-warehouse-id="{{ wh.id }}" 
+                            data-warehouse-name="{{ wh.name }}"
+                            title="Add Location/Phase">
+                        <i class="bi bi-plus-lg"></i> Location
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="accordion-wh-{{ outer_loop.index }}">
+                    {% for loc_name, items in wh.locations.items() %}
+                    <div class="accordion-item" style="background:transparent; border-bottom: 1px solid var(--color-border);">
+                        <h2 class="accordion-header" id="heading-wh-{{ outer_loop.index }}-{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-wh-{{ outer_loop.index }}-{{ loop.index }}" aria-expanded="false" aria-controls="collapse-wh-{{ outer_loop.index }}-{{ loop.index }}" style="background:transparent; color:var(--color-text-primary); font-size:13px; font-weight:600; padding:16px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-geo-alt text-accent"></i>
+                                    <span>Phase / Location: <strong style="color:var(--color-text-primary);">{{ loc_name }}</strong></span>
+                                    {% if current_user.has_permission('adjust_inventory') %}
+                                    <span class="btn-link text-accent p-0 border-0 bg-transparent ms-1" 
+                                          style="font-size: 14px; cursor: pointer; transition: transform 0.2s;"
+                                          onclick="event.stopPropagation();" 
+                                          data-bs-toggle="modal" 
+                                          data-bs-target="#editLocationModal" 
+                                          data-warehouse-id="{{ wh.id }}" 
+                                          data-warehouse-name="{{ wh.name }}" 
+                                          data-old-name="{{ loc_name }}" 
+                                          title="Rename Location">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <span class="badge bg-secondary-dim text-secondary ms-auto font-mono" style="font-size:11px;">{{ items|length }} items</span>
+                            </button>
+                        </h2>
+                        <div id="collapse-wh-{{ outer_loop.index }}-{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading-wh-{{ outer_loop.index }}-{{ loop.index }}" data-bs-parent="#accordion-wh-{{ outer_loop.index }}">
+                            <div class="accordion-body p-0" style="background: var(--color-bg-elevated);">
+                                <table class="table table-sm align-middle" style="margin-bottom:0; font-size:13px;">
+                                    <thead>
+                                        <tr style="background:var(--color-bg-overlay);">
+                                            <th style="padding-left:16px;">Product</th>
+                                            <th>SKU</th>
+                                            <th>On Hand</th>
+                                            <th>Free to Use</th>
+                                            <th style="padding-right:16px;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in items %}
+                                        <tr>
+                                            <td style="padding-left:16px;">
+                                                <a href="{{ url_for('products.view_product', id=item.product.id) }}" style="font-weight:500; color:var(--color-text-primary); text-decoration:none;">
+                                                    {{ item.product.name }}
+                                                </a>
+                                            </td>
+                                            <td><span class="sku-badge">{{ item.product.sku }}</span></td>
+                                            <td class="font-mono">{{ item.on_hand_qty }}</td>
+                                            <td class="font-mono {% if item.free_to_use_qty <= 0 %}text-danger{% else %}text-success{% endif %}">{{ item.free_to_use_qty }}</td>
+                                            <td style="padding-right:16px;">
+                                                {% if item.is_low_stock %}
+                                                    <span class="status-pill critical">Low Stock</span>
+                                                {% elif item.free_to_use_qty <= 0 %}
+                                                    <span class="status-pill cancelled">Out of Stock</span>
+                                                {% else %}
+                                                    <span class="status-pill done">In Stock</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card p-5 text-center">
+            <i class="bi bi-houses text-muted" style="font-size:3rem; margin-bottom:12px;"></i>
+            <h5>No Warehouses Registered</h5>
+            <p class="text-muted">Register products and assign stock locations to display warehouse information.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+  .custom-modal-content {
+      background-color: var(--color-bg-elevated) !important;
+      border: 1px solid var(--color-border-strong) !important;
+      border-radius: var(--radius-lg) !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.3) !important;
+      backdrop-filter: blur(8px);
+  }
+  .custom-modal-header {
+      border-bottom: 1px solid var(--color-border) !important;
+      padding: 1.25rem 1.5rem !important;
+  }
+  .custom-modal-footer {
+      border-top: 1px solid var(--color-border) !important;
+      padding: 1rem 1.5rem !important;
+  }
+  .custom-modal-title {
+      color: var(--color-text-primary) !important;
+      font-weight: 600 !important;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+  }
+  .custom-form-label {
+      color: var(--color-text-secondary);
+      font-weight: 500;
+      font-size: 0.8125rem;
+      margin-bottom: 0.5rem;
+  }
+  .custom-form-control {
+      background-color: var(--color-bg-overlay) !important;
+      border: 1px solid var(--color-border) !important;
+      color: var(--color-text-primary) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 0.6rem 0.85rem !important;
+      font-size: 0.875rem !important;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+  }
+  .custom-form-control:focus {
+      border-color: var(--color-accent) !important;
+      box-shadow: 0 0 0 3px var(--color-accent-glow) !important;
+      outline: none !important;
+  }
+  .custom-form-text {
+      color: var(--color-text-dim);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+  }
+  .custom-modal-content .btn-close {
+      filter: invert(1) grayscale(1) brightness(2);
+  }
+  [data-theme="light"] .custom-modal-content .btn-close {
+      filter: none;
+  }
+</style>
+
+{% endblock %}
+
+{% block modals %}
+<!-- Add Warehouse Modal -->
+<div class="modal fade" id="addWarehouseModal" tabindex="-1" aria-labelledby="addWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal-content">
+            <div class="modal-header custom-modal-header">
+                <h5 class="modal-title custom-modal-title" id="addWarehouseModalLabel">
+                    <i class="bi bi-houses text-accent"></i> Add Warehouse
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('inventory.create_warehouse') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="add-wh-name" class="form-label custom-form-label">Warehouse Name</label>
+                        <input type="text" class="form-control custom-form-control" id="add-wh-name" name="name" placeholder="e.g. East Coast Distribution" required autocomplete="off">
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-wh-code" class="form-label custom-form-label">Warehouse Code</label>
+                        <input type="text" class="form-control custom-form-control font-mono" id="add-wh-code" name="code" placeholder="e.g. WH-EAST" required autocomplete="off">
+                        <div class="custom-form-text">Must be unique. Capital letters and hyphens recommended.</div>
+                    </div>
+                    <div class="mb-0">
+                        <label for="add-wh-address" class="form-label custom-form-label">Address / Location Info (Optional)</label>
+                        <textarea class="form-control custom-form-control" id="add-wh-address" name="address" rows="2" placeholder="e.g. 100 Logistics Way, Suite A"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer custom-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Warehouse</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Warehouse Modal -->
+<div class="modal fade" id="editWarehouseModal" tabindex="-1" aria-labelledby="editWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal-content">
+            <div class="modal-header custom-modal-header">
+                <h5 class="modal-title custom-modal-title" id="editWarehouseModalLabel">
+                    <i class="bi bi-pencil-square text-accent"></i> Edit Warehouse Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('inventory.update_warehouse') }}" method="POST">
+                <input type="hidden" id="edit-wh-id" name="warehouse_id">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="edit-wh-name" class="form-label custom-form-label">Warehouse Name</label>
+                        <input type="text" class="form-control custom-form-control" id="edit-wh-name" name="name" required autocomplete="off">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-wh-code" class="form-label custom-form-label">Warehouse Code</label>
+                        <input type="text" class="form-control custom-form-control font-mono" id="edit-wh-code" name="code" required autocomplete="off">
+                        <div class="custom-form-text">Must be unique. Changing this will not break existing records, but is tracked as config.</div>
+                    </div>
+                    <div class="mb-0">
+                        <label for="edit-wh-address" class="form-label custom-form-label">Address / Location Info</label>
+                        <textarea class="form-control custom-form-control" id="edit-wh-address" name="address" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer custom-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Location Modal -->
+<div class="modal fade" id="addLocationModal" tabindex="-1" aria-labelledby="addLocationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal-content">
+            <div class="modal-header custom-modal-header">
+                <h5 class="modal-title custom-modal-title" id="addLocationModalLabel">
+                    <i class="bi bi-geo-alt text-accent"></i> Add Location/Phase
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('inventory.create_location') }}" method="POST">
+                <input type="hidden" id="add-loc-wh-id" name="warehouse_id">
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">Adding a new phase or stock location under warehouse: <strong id="add-loc-wh-name" style="color:var(--color-text-primary);"></strong></p>
+                    <div class="mb-0">
+                        <label for="add-loc-name" class="form-label custom-form-label">Location / Phase Name</label>
+                        <input type="text" class="form-control custom-form-control" id="add-loc-name" name="name" placeholder="e.g. Phase 2, Aisle B, Cold Storage" required autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer custom-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Location</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Location Modal -->
+<div class="modal fade" id="editLocationModal" tabindex="-1" aria-labelledby="editLocationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal-content">
+            <div class="modal-header custom-modal-header">
+                <h5 class="modal-title custom-modal-title" id="editLocationModalLabel">
+                    <i class="bi bi-pencil-square text-accent"></i> Rename Location/Phase
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('inventory.update_location') }}" method="POST">
+                <input type="hidden" id="edit-loc-wh-id" name="warehouse_id">
+                <input type="hidden" id="edit-loc-old-name" name="old_name">
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">Renaming location <strong id="edit-loc-display-old-name" style="color:var(--color-text-primary);"></strong> under warehouse <strong id="edit-loc-wh-name" style="color:var(--color-text-primary);"></strong>.</p>
+                    <div class="mb-3">
+                        <label for="edit-loc-new-name" class="form-label custom-form-label">New Location Name</label>
+                        <input type="text" class="form-control custom-form-control" id="edit-loc-new-name" name="new_name" required autocomplete="off">
+                    </div>
+                    <div class="alert alert-warning-dim text-warning p-3 rounded small mb-0" style="background:var(--color-warning-dim); border:1px solid rgba(245,158,11,0.2); font-size:12px; color: var(--color-warning) !important;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>Important:</strong> Renaming a location is a cascading operation. All existing inventory quantities, transfers, and document links matching this location name under this warehouse will be updated to the new name.
+                    </div>
+                </div>
+                <div class="modal-footer custom-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Rename Location</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Edit Warehouse Modal
+    const editWarehouseModal = document.getElementById('editWarehouseModal');
+    if (editWarehouseModal) {
+        editWarehouseModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            const code = button.getAttribute('data-code');
+            const address = button.getAttribute('data-address');
+            
+            editWarehouseModal.querySelector('#edit-wh-id').value = id;
+            editWarehouseModal.querySelector('#edit-wh-name').value = name;
+            editWarehouseModal.querySelector('#edit-wh-code').value = code;
+            editWarehouseModal.querySelector('#edit-wh-address').value = address;
+        });
+    }
+
+    // Add Location Modal
+    const addLocationModal = document.getElementById('addLocationModal');
+    if (addLocationModal) {
+        addLocationModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const whId = button.getAttribute('data-warehouse-id');
+            const whName = button.getAttribute('data-warehouse-name');
+            
+            addLocationModal.querySelector('#add-loc-wh-id').value = whId;
+            addLocationModal.querySelector('#add-loc-wh-name').textContent = whName;
+        });
+    }
+
+    // Edit Location Modal
+    const editLocationModal = document.getElementById('editLocationModal');
+    if (editLocationModal) {
+        editLocationModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const whId = button.getAttribute('data-warehouse-id');
+            const whName = button.getAttribute('data-warehouse-name');
+            const oldName = button.getAttribute('data-old-name');
+            
+            editLocationModal.querySelector('#edit-loc-wh-id').value = whId;
+            editLocationModal.querySelector('#edit-loc-old-name').value = oldName;
+            editLocationModal.querySelector('#edit-loc-display-old-name').textContent = oldName;
+            editLocationModal.querySelector('#edit-loc-wh-name').textContent = whName;
+            editLocationModal.querySelector('#edit-loc-new-name').value = oldName;
+        });
+    }
+});
+</script>
+{% endblock %}

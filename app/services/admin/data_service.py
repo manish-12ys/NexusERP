@@ -20,6 +20,7 @@ from app.models.pos_order_line import PosOrderLine
 from app.models.pos_session import PosSession
 from app.models.procurement_request import ProcurementRequest
 from app.models.procurement_rule import ProcurementRule
+from app.models.stock_transfer import StockTransfer
 from app.models.work_center import WorkCenter
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
@@ -58,6 +59,7 @@ class AdminDataService:
         # 4. Delete Procurement data (must be deleted before MO and PO due to foreign keys)
         AdminDataService._delete_if_exists(ProcurementRequest)
         AdminDataService._delete_if_exists(ProcurementRule)
+        AdminDataService._delete_if_exists(StockTransfer)
         
         # 5. Delete Purchase Order data
         AdminDataService._delete_if_exists(PurchaseOrderLine)

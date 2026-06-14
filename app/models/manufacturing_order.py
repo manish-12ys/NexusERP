@@ -16,7 +16,10 @@ class ManufacturingOrder(db.Model):
     end_date = db.Column(db.DateTime)
     assignee_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     notes = db.Column(db.Text)
+    warehouse = db.Column(db.String(80))
+    location = db.Column(db.String(80))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     product = db.relationship("Product", backref="manufacturing_orders")

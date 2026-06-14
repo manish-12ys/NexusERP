@@ -106,15 +106,26 @@ def view_product(id):
 @permission_required("create_products")
 def create_product():
     form = ProductForm()
-    form.category_id.choices = [
-        (c.id, c.name) for c in Category.query.order_by(Category.name).all()
+
+    # Auto-seed default categories if the table is empty so the dropdown
+    # is never blank on a fresh / reset database.
+    if not Category.query.first():
+        default_cats = ["Components", "Elements", "End Products", "Packaging", "Tools"]
+        for name in default_cats:
+            db.session.add(Category(name=name))
+        db.session.commit()
+
+    categories = Category.query.order_by(Category.name).all()
+    form.category_id.choices = [(0, "-- Select Category --")] + [
+        (c.id, c.name) for c in categories
     ]
     if form.validate_on_submit() and _product_unique_fields_are_valid(form):
+        cat_id = form.category_id.data or None   # coerce 0 → None
         product = Product(
             name=form.name.data,
             sku=generate_product_sku(form.product_type.data, form.name.data),
             barcode=form.barcode.data,
-            category_id=form.category_id.data,
+            category_id=cat_id,
             description=form.description.data,
             cost_price=form.cost_price.data,
             sales_price=form.sales_price.data,
@@ -136,7 +147,7 @@ def create_product():
         return redirect(url_for("products.list_products"))
     if form.is_submitted() and form.errors:
         flash("Please fix the highlighted product details and try again.", "danger")
-    return render_template("products/create.html", form=form)
+    return render_template("products/create.html", form=form, categories=categories)
 
 
 @products_bp.route("/<int:id>/edit", methods=["GET", "POST"])
@@ -145,13 +156,14 @@ def create_product():
 def edit_product(id):
     product = Product.query.get_or_404(id)
     form = ProductForm(obj=product)
-    form.category_id.choices = [
-        (c.id, c.name) for c in Category.query.order_by(Category.name).all()
+    categories = Category.query.order_by(Category.name).all()
+    form.category_id.choices = [(0, "-- Select Category --")] + [
+        (c.id, c.name) for c in categories
     ]
     if form.validate_on_submit() and _product_unique_fields_are_valid(form, product.id):
         product.name = form.name.data
         product.barcode = form.barcode.data
-        product.category_id = form.category_id.data
+        product.category_id = form.category_id.data or None   # coerce 0 → None
         product.description = form.description.data
         product.cost_price = form.cost_price.data
         product.sales_price = form.sales_price.data

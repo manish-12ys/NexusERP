@@ -6,9 +6,13 @@ class Inventory(db.Model):
     __tablename__ = "inventories"
 
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), unique=True, nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     warehouse = db.Column(db.String(80), default="Main")
     location = db.Column(db.String(80), default="Default")
+
+    __table_args__ = (
+        db.UniqueConstraint("product_id", "warehouse", "location", name="_product_warehouse_location_uc"),
+    )
     on_hand_qty = db.Column(db.Float, default=0.0)
     reserved_qty = db.Column(db.Float, default=0.0)
     incoming_qty = db.Column(db.Float, default=0.0)

@@ -152,51 +152,63 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     // Resolve CSS variable tokens to keep charts completely theme-aware
-    const style = getComputedStyle(document.documentElement);
-    
-    const fontSans = style.getPropertyValue('--font-sans').trim() || 'Inter, sans-serif';
-    const fontMono = style.getPropertyValue('--font-mono').trim() || 'monospace';
-    const colorTextSec = style.getPropertyValue('--color-text-secondary').trim() || '#a0a0ab';
-    const colorTextDim = style.getPropertyValue('--color-text-dim').trim() || '#6b6b78';
-    const colorBorder = style.getPropertyValue('--color-border').trim() || 'rgba(255, 255, 255, 0.07)';
-    
-    // Core chart theme settings
-    const chartDefaults = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                labels: {
-                    color: colorTextSec,
-                    font: { family: fontSans, size: 11, weight: '500' },
-                    boxWidth: 12,
-                    boxHeight: 12,
-                    borderRadius: 3
+    function getThemeColors() {
+        const style = getComputedStyle(document.documentElement);
+        return {
+            sans: style.getPropertyValue('--font-sans').trim() || 'Inter, sans-serif',
+            mono: style.getPropertyValue('--font-mono').trim() || 'monospace',
+            textSec: style.getPropertyValue('--color-text-secondary').trim() || '#a0a0ab',
+            textDim: style.getPropertyValue('--color-text-dim').trim() || '#6b6b78',
+            border: style.getPropertyValue('--color-border').trim() || 'rgba(255, 255, 255, 0.07)',
+            bgSurface: style.getPropertyValue('--color-bg-surface').trim() || '#111113',
+            bgOverlay: style.getPropertyValue('--color-bg-overlay').trim() || '#1f1f24',
+            accent: style.getPropertyValue('--color-accent').trim() || '#6366f1'
+        };
+    }
+
+    let colors = getThemeColors();
+    const activeCharts = {};
+
+    function getChartDefaults(currentColors) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: currentColors.textSec,
+                        font: { family: currentColors.sans, size: 11, weight: '500' },
+                        boxWidth: 12,
+                        boxHeight: 12,
+                        borderRadius: 3
+                    }
+                },
+                tooltip: {
+                    backgroundColor: currentColors.bgOverlay,
+                    titleColor: '#fff',
+                    bodyColor: currentColors.textSec,
+                    borderColor: currentColors.border,
+                    borderWidth: 1,
+                    titleFont: { family: currentColors.sans, weight: '600' },
+                    bodyFont: { family: currentColors.mono },
+                    padding: 10,
+                    cornerRadius: 6
                 }
             },
-            tooltip: {
-                backgroundColor: style.getPropertyValue('--color-bg-overlay').trim() || '#1f1f24',
-                titleColor: '#fff',
-                bodyColor: colorTextSec,
-                borderColor: colorBorder,
-                borderWidth: 1,
-                titleFont: { family: fontSans, weight: '600' },
-                bodyFont: { family: fontMono },
-                padding: 10,
-                cornerRadius: 6
+            scales: {
+                x: {
+                    grid: { color: 'transparent' },
+                    ticks: { color: currentColors.textDim, font: { family: currentColors.sans, size: 10 } }
+                },
+                y: {
+                    grid: { color: currentColors.border },
+                    ticks: { color: currentColors.textDim, font: { family: currentColors.mono, size: 10 } }
+                }
             }
-        },
-        scales: {
-            x: {
-                grid: { color: 'transparent' },
-                ticks: { color: colorTextDim, font: { family: fontSans, size: 10 } }
-            },
-            y: {
-                grid: { color: colorBorder },
-                ticks: { color: colorTextDim, font: { family: fontMono, size: 10 } }
-            }
-        }
-    };
+        };
+    }
+
+    let chartDefaults = getChartDefaults(colors);
 
     // ─── 1. Sales vs Purchases Chart ───
     fetch('{{ url_for("analytics.sales_vs_purchases") }}')
@@ -213,7 +225,7 @@ document.addEventListener("DOMContentLoaded", function() {
             purchaseGrad.addColorStop(0, 'rgba(239, 68, 68, 0.12)');
             purchaseGrad.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
 
-            new Chart(ctx, {
+            activeCharts.salesVsPurchases = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: data.map(d => {
@@ -255,7 +267,7 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
             const ctx = document.getElementById('categoryValuationChart');
             
-            new Chart(ctx, {
+            activeCharts.categoryValuation = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: data.map(d => d.category),
@@ -270,7 +282,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             '#ec4899'  // Pink
                         ],
                         borderWidth: 2,
-                        borderColor: style.getPropertyValue('--color-bg-surface').trim() || '#111113'
+                        borderColor: colors.bgSurface
                     }]
                 },
                 options: {
@@ -281,8 +293,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         legend: {
                             position: 'right',
                             labels: {
-                                color: colorTextSec,
-                                font: { family: fontSans, size: 11 },
+                                color: colors.textSec,
+                                font: { family: colors.sans, size: 11 },
                                 boxWidth: 10,
                                 boxHeight: 10
                             }
@@ -299,17 +311,17 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
             const ctx = document.getElementById('topProductsChart');
             
-            new Chart(ctx, {
+            activeCharts.topProducts = new Chart(ctx, {
                 ...chartDefaults,
                 indexAxis: 'y',
                 scales: {
                     x: {
-                        grid: { color: colorBorder },
-                        ticks: { color: colorTextDim, font: { family: fontMono, size: 10 } }
+                        grid: { color: colors.border },
+                        ticks: { color: colors.textDim, font: { family: colors.mono, size: 10 } }
                     },
                     y: {
                         grid: { color: 'transparent' },
-                        ticks: { color: colorTextSec, font: { family: fontSans, size: 11 } }
+                        ticks: { color: colors.textSec, font: { family: colors.sans, size: 11 } }
                     }
                 },
                 data: {
@@ -332,23 +344,23 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
             // Update stats cards
             document.getElementById('made-count').innerText = `${data.made.count} items`;
-            document.getElementById('made-valuation').innerText = `₹${data.made.valuation.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} val`;
+            document.getElementById('made-valuation').innerText = `₹${data.made.valuation.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             document.getElementById('bought-count').innerText = `${data.bought.count} items`;
-            document.getElementById('bought-valuation').innerText = `₹${data.bought.valuation.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} val`;
+            document.getElementById('bought-valuation').innerText = `₹${data.bought.valuation.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             
             const ctx = document.getElementById('madeVsBoughtValuationChart');
-            new Chart(ctx, {
+            activeCharts.madeVsBought = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['Made In-House', 'Bought from Outside'],
                     datasets: [{
                         data: [data.made.valuation, data.bought.valuation],
                         backgroundColor: [
-                            style.getPropertyValue('--color-accent').trim() || '#6366f1',
+                            colors.accent,
                             '#38bdf8'
                         ],
                         borderWidth: 2,
-                        borderColor: style.getPropertyValue('--color-bg-surface').trim() || '#111113'
+                        borderColor: colors.bgSurface
                     }]
                 },
                 options: {
@@ -358,8 +370,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         legend: {
                             position: 'right',
                             labels: {
-                                color: colorTextSec,
-                                font: { family: fontSans, size: 11 },
+                                color: colors.textSec,
+                                font: { family: colors.sans, size: 11 },
                                 boxWidth: 10,
                                 boxHeight: 10
                             }
@@ -369,6 +381,60 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
         });
+
+    // ─── Real-time Theme Change Handler ───
+    document.addEventListener('themechanged', function(e) {
+        const newColors = getThemeColors();
+
+        // 1. Update Sales vs Purchases Chart
+        if (activeCharts.salesVsPurchases) {
+            const chart = activeCharts.salesVsPurchases;
+            chart.options.plugins.legend.labels.color = newColors.textSec;
+            chart.options.plugins.tooltip.backgroundColor = newColors.bgOverlay;
+            chart.options.plugins.tooltip.bodyColor = newColors.textSec;
+            chart.options.plugins.tooltip.borderColor = newColors.border;
+            chart.options.scales.x.ticks.color = newColors.textDim;
+            chart.options.scales.y.ticks.color = newColors.textDim;
+            chart.options.scales.y.grid.color = newColors.border;
+            chart.update();
+        }
+
+        // 2. Update Category Valuation Chart
+        if (activeCharts.categoryValuation) {
+            const chart = activeCharts.categoryValuation;
+            chart.data.datasets[0].borderColor = newColors.bgSurface;
+            chart.options.plugins.legend.labels.color = newColors.textSec;
+            chart.options.plugins.tooltip.backgroundColor = newColors.bgOverlay;
+            chart.options.plugins.tooltip.bodyColor = newColors.textSec;
+            chart.options.plugins.tooltip.borderColor = newColors.border;
+            chart.update();
+        }
+
+        // 3. Update Top Selling Products Chart
+        if (activeCharts.topProducts) {
+            const chart = activeCharts.topProducts;
+            chart.options.plugins.legend.labels.color = newColors.textSec;
+            chart.options.plugins.tooltip.backgroundColor = newColors.bgOverlay;
+            chart.options.plugins.tooltip.bodyColor = newColors.textSec;
+            chart.options.plugins.tooltip.borderColor = newColors.border;
+            chart.options.scales.x.ticks.color = newColors.textDim;
+            chart.options.scales.x.grid.color = newColors.border;
+            chart.options.scales.y.ticks.color = newColors.textSec;
+            chart.update();
+        }
+
+        // 4. Update Made vs Bought Sourcing Chart
+        if (activeCharts.madeVsBought) {
+            const chart = activeCharts.madeVsBought;
+            chart.data.datasets[0].backgroundColor[0] = newColors.accent;
+            chart.data.datasets[0].borderColor = newColors.bgSurface;
+            chart.options.plugins.legend.labels.color = newColors.textSec;
+            chart.options.plugins.tooltip.backgroundColor = newColors.bgOverlay;
+            chart.options.plugins.tooltip.bodyColor = newColors.textSec;
+            chart.options.plugins.tooltip.borderColor = newColors.border;
+            chart.update();
+        }
+    });
 });
 </script>
 {% endblock %}

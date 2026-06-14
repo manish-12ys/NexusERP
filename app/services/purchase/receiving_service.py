@@ -20,8 +20,13 @@ class ReceivingService:
             if remaining > 0:
                 from app.services.inventory.inventory_service import InventoryService
 
-                inv = InventoryService.get_or_create_inventory(line.product_id)
+                inv = InventoryService.get_or_create_inventory(
+                    line.product_id,
+                    warehouse=line.warehouse or "Main",
+                    location=line.location or "Default"
+                )
                 before = inv.on_hand_qty
+
                 inv.on_hand_qty += remaining
                 line.received_qty = line.quantity
 

@@ -18,6 +18,25 @@
                         {{ form.product_id.label(class="form-label font-secondary") }}
                         {{ form.product_id(class="form-select bg-dark border-secondary text-light") }}
                     </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            {{ form.warehouse.label(class="form-label font-secondary") }}
+                            {{ form.warehouse(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Main", list="warehouse-list", autocomplete="off") }}
+                            <datalist id="warehouse-list">
+                                {% for wh in warehouse_map.keys() %}
+                                <option value="{{ wh }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.location.label(class="form-label font-secondary") }}
+                            {{ form.location(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Default", list="location-list", autocomplete="off") }}
+                            <datalist id="location-list">
+                                <!-- Dynamically populated via JavaScript -->
+                            </datalist>
+                        </div>
+                    </div>
                     
                     <div class="mb-3">
                         {{ form.quantity.label(class="form-label font-secondary") }}
@@ -36,4 +55,33 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const warehouseMap = {{ warehouse_map | tojson | safe }};
+    const warehouseInput = document.getElementById('warehouse');
+    const locationInput = document.getElementById('location');
+    const locDatalist = document.getElementById('location-list');
+
+    function updateLocationOptions() {
+        const selectedWh = warehouseInput.value.trim();
+        locDatalist.innerHTML = '';
+        if (selectedWh && warehouseMap[selectedWh]) {
+            warehouseMap[selectedWh].forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                locDatalist.appendChild(opt);
+            });
+        }
+    }
+
+    warehouseInput.addEventListener('input', updateLocationOptions);
+    warehouseInput.addEventListener('change', updateLocationOptions);
+
+    // Initial populate
+    updateLocationOptions();
+});
+</script>
 {% endblock %}

@@ -26,10 +26,21 @@ class Product(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     category = db.relationship("Category", backref="products")
-    inventory = db.relationship("Inventory", backref="product", uselist=False)
+    inventories = db.relationship("Inventory", backref="product")
     bom = db.relationship("Bom", backref="product", uselist=False)
     sale_lines = db.relationship("SalesOrderLine", backref="product", lazy="dynamic")
     purchase_lines = db.relationship("PurchaseOrderLine", backref="product", lazy="dynamic")
+
+    @property
+    def inventory(self):
+        # Return the main/primary inventory if it exists, otherwise the first available
+        if not self.inventories:
+            return None
+        # Return Main/Default warehouse, or Phase 1 if present
+        main_inv = next((i for i in self.inventories if i.warehouse == "Main"), None)
+        if main_inv:
+            return main_inv
+        return self.inventories[0]
 
     def __repr__(self):
         return f"<Product {self.name} ({self.sku})>"

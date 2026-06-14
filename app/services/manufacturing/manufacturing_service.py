@@ -33,17 +33,30 @@ class ManufacturingService:
         messages = []
 
         # Check component availability and create MOs for shortages
+        mo_wh = mo.warehouse or "Main"
+        mo_loc = mo.location or "Default"
         if mo.bom:
             for component in mo.bom.components.all():
                 component_product = component.component_product
                 required_qty = component.quantity * mo.quantity
-                inventory = component_product.inventory
+                
+                from app.models.inventory import Inventory
+                inventory = Inventory.query.filter_by(
+                    product_id=component_product.id,
+                    warehouse=mo_wh,
+                    location=mo_loc
+                ).first()
                 available_qty = inventory.free_to_use_qty if inventory else 0.0
                 shortage_qty = max(0, required_qty - available_qty)
 
-                # Reserve available stock for this component
+                # Reserve available stock for this component at the MO's location
                 if available_qty > 0:
-                    StockService.reserve_stock(component_product.id, min(available_qty, required_qty))
+                    StockService.reserve_stock(
+                        component_product.id,
+                        min(available_qty, required_qty),
+                        warehouse=mo_wh,
+                        location=mo_loc
+                    )
 
                 # Create manufacturing order for component shortage
                 if shortage_qty > 0:
@@ -53,12 +66,15 @@ class ManufacturingService:
                         product_id=component_product.id,
                         bom_id=component_bom.id if component_bom else None,
                         quantity=shortage_qty,
+                        warehouse=mo_wh,
+                        location=mo_loc,
                         notes=f"Auto-created for component shortage in MO {mo.mo_number}",
                         status="draft",
                     )
                     db.session.add(component_mo)
                     db.session.flush()
                     messages.append(f"Manufacturing order created for {shortage_qty} units of {component_product.name}")
+
 
         mo.status = "confirmed"
         db.session.commit()

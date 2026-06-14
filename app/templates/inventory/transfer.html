@@ -1,8 +1,8 @@
 {% extends "layouts/base.html" %}
 {% block title %}Transfer Stock - NexusERP{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-7">
+<div class="row justify-content-center animate-fade-up">
+    <div class="col-md-8">
         <div class="card shadow border-0 glass-card">
             <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 text-gradient"><i class="bi bi-arrow-left-right"></i> Transfer Stock</h5>
@@ -14,31 +14,213 @@
                 <form method="POST">
                     {{ form.hidden_tag() }}
                     
-                    <div class="mb-3">
+                    <!-- Hidden field for compatibility -->
+                    <div style="display:none;">
+                        {{ form.source_inventory_id }}
+                    </div>
+                    
+                    <!-- Product Choice -->
+                    <div class="mb-4">
                         {{ form.product_id.label(class="form-label font-secondary") }}
                         {{ form.product_id(class="form-select bg-dark border-secondary text-light") }}
                     </div>
+
+                    <!-- Available Stock Dynamic Widget -->
+                    <div id="available-stock-container" class="card bg-dark border-secondary mb-4 p-3">
+                        <div class="card-title text-gradient small mb-3 fw-bold">
+                            <i class="bi bi-info-circle-fill"></i> Available Stock Locations
+                        </div>
+                        <div id="available-stock-list" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Dynamically populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Bidirectional source/destination controls -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 border border-secondary rounded bg-dark-dim">
+                                <span class="badge bg-secondary-dim text-accent mb-2"><i class="bi bi-box-arrow-up"></i> Source (From)</span>
+                                <div class="mb-3">
+                                    {{ form.from_warehouse.label(class="form-label font-secondary small") }}
+                                    {{ form.from_warehouse(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Main", list="from-warehouse-list", autocomplete="off") }}
+                                    <datalist id="from-warehouse-list">
+                                        {% for wh in warehouse_map.keys() %}
+                                        <option value="{{ wh }}">
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <div class="mb-0">
+                                    {{ form.from_location.label(class="form-label font-secondary small") }}
+                                    {{ form.from_location(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Default", list="from-location-list", autocomplete="off") }}
+                                    <datalist id="from-location-list">
+                                        <!-- Dynamically populated -->
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 border border-secondary rounded bg-dark-dim">
+                                <span class="badge bg-primary-dim text-primary mb-2"><i class="bi bi-box-arrow-in-down"></i> Target (To)</span>
+                                <div class="mb-3">
+                                    {{ form.to_warehouse.label(class="form-label font-secondary small") }}
+                                    {{ form.to_warehouse(class="form-control border-secondary bg-dark text-light", placeholder="e.g. POS Warehouse", list="to-warehouse-list", autocomplete="off") }}
+                                    <datalist id="to-warehouse-list">
+                                        {% for wh in warehouse_map.keys() %}
+                                        <option value="{{ wh }}">
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <div class="mb-0">
+                                    {{ form.to_location.label(class="form-label font-secondary small") }}
+                                    {{ form.to_location(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Counter Shelf 3", list="to-location-list", autocomplete="off") }}
+                                    <datalist id="to-location-list">
+                                        <!-- Dynamically populated -->
+                                    </datalist>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <div class="mb-3">
+                    <!-- Quantity -->
+                    <div class="mb-4">
                         {{ form.quantity.label(class="form-label font-secondary") }}
                         {{ form.quantity(class="form-control border-secondary bg-dark text-light", placeholder="e.g. 15") }}
                     </div>
                     
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            {{ form.to_warehouse.label(class="form-label font-secondary") }}
-                            {{ form.to_warehouse(class="form-control border-secondary bg-dark text-light", placeholder="e.g. POS Warehouse") }}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.to_location.label(class="form-label font-secondary") }}
-                            {{ form.to_location(class="form-control border-secondary bg-dark text-light", placeholder="e.g. Counter Shelf 3") }}
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary bg-gradient border-0 px-4 py-2 w-100"><i class="bi bi-arrow-left-right"></i> Execute Location Transfer</button>
+                    <button type="submit" class="btn btn-primary bg-gradient border-0 px-4 py-2 w-100"><i class="bi bi-arrow-left-right"></i> Execute Stock Transfer</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+  .btn-xs {
+      padding: 0.15rem 0.4rem;
+      font-size: 0.75rem;
+      line-height: 1.2;
+  }
+  .bg-dark-dim {
+      background-color: rgba(17, 24, 39, 0.4) !important;
+  }
+  .bg-success-dim {
+      background-color: rgba(16, 185, 129, 0.15) !important;
+      color: #10b981 !important;
+  }
+  .bg-primary-dim {
+      background-color: rgba(99, 102, 241, 0.15) !important;
+      color: #6366f1 !important;
+  }
+  .bg-secondary-dim {
+      background-color: rgba(156, 163, 175, 0.15) !important;
+      color: #9ca3af !important;
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const warehouseMap = {{ warehouse_map | tojson | safe }};
+    const productStockMap = {{ product_stock_map | tojson | safe }};
+    
+    const productSelect = document.getElementById('product_id');
+    const fromWhInput = document.getElementById('from_warehouse');
+    const fromLocInput = document.getElementById('from_location');
+    const toWhInput = document.getElementById('to_warehouse');
+    const toLocInput = document.getElementById('to_location');
+    
+    const fromLocDatalist = document.getElementById('from-location-list');
+    const toLocDatalist = document.getElementById('to-location-list');
+    const stockList = document.getElementById('available-stock-list');
+
+    // Update Available Stock widget based on selected product
+    function updateAvailableStock() {
+        const productId = productSelect.value;
+        stockList.innerHTML = '';
+        
+        const stocks = productStockMap[productId] || [];
+        if (stocks.length === 0) {
+            stockList.innerHTML = `
+                <div class="p-3 text-center text-muted border border-secondary border-dashed rounded" style="border-style: dashed !important; font-size: 13px;">
+                    <i class="bi bi-exclamation-circle me-1"></i> No active stock found for this product.
+                </div>
+            `;
+            return;
+        }
+
+        const table = document.createElement('table');
+        table.className = 'table table-sm table-hover align-middle mb-0 text-light';
+        table.style.fontSize = '12px';
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Warehouse</th>
+                    <th>Location/Phase</th>
+                    <th>Available</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+        const tbody = table.querySelector('tbody');
+
+        stocks.forEach(stock => {
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.innerHTML = `
+                <td><strong class="text-accent">${stock.warehouse}</strong></td>
+                <td><span class="text-secondary font-mono">${stock.location}</span></td>
+                <td><span class="badge bg-success-dim text-success font-mono">${stock.qty} units</span></td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-outline-info btn-xs rounded-pill px-2 py-0">
+                        Use Source
+                    </button>
+                </td>
+            `;
+            tr.addEventListener('click', function(e) {
+                e.preventDefault();
+                fromWhInput.value = stock.warehouse;
+                fromLocInput.value = stock.location;
+                // Trigger change/input events
+                fromWhInput.dispatchEvent(new Event('input', { bubbles: true }));
+                fromWhInput.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Visual feedback
+                tr.classList.add('table-active');
+                setTimeout(() => tr.classList.remove('table-active'), 300);
+            });
+            tbody.appendChild(tr);
+        });
+
+        stockList.appendChild(table);
+    }
+
+    // Update location lists dynamically
+    function updateLocationOptions(whInput, datalist) {
+        const selectedWh = whInput.value.trim();
+        datalist.innerHTML = '';
+        if (selectedWh && warehouseMap[selectedWh]) {
+            warehouseMap[selectedWh].forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                datalist.appendChild(opt);
+            });
+        }
+    }
+
+    productSelect.addEventListener('change', updateAvailableStock);
+    
+    fromWhInput.addEventListener('input', () => updateLocationOptions(fromWhInput, fromLocDatalist));
+    fromWhInput.addEventListener('change', () => updateLocationOptions(fromWhInput, fromLocDatalist));
+    
+    toWhInput.addEventListener('input', () => updateLocationOptions(toWhInput, toLocDatalist));
+    toWhInput.addEventListener('change', () => updateLocationOptions(toWhInput, toLocDatalist));
+
+    // Initialize
+    updateAvailableStock();
+    updateLocationOptions(fromWhInput, fromLocDatalist);
+    updateLocationOptions(toWhInput, toLocDatalist);
+});
+</script>
 {% endblock %}

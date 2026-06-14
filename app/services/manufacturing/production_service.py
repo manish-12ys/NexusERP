@@ -12,12 +12,18 @@ class ProductionService:
             return None
         mo.status = "completed"
         mo.produced_qty = mo.quantity
+        
+        mo_wh = mo.warehouse or "Main"
+        mo_loc = mo.location or "Default"
+
         # Consume raw materials from stock
         if mo.bom:
             for component in mo.bom.components.all():
                 required_qty = component.quantity * mo.quantity
                 inv = Inventory.query.filter_by(
-                    product_id=component.product_id
+                    product_id=component.product_id,
+                    warehouse=mo_wh,
+                    location=mo_loc
                 ).first()
                 if inv:
                     inv.on_hand_qty -= required_qty
@@ -33,15 +39,14 @@ class ProductionService:
                         unit_price=component.unit_cost,
                         total_value=required_qty * component.unit_cost,
                         user_id=user_id,
-                        notes=f"Consumed for MO {mo.mo_number}",
+                        notes=f"Consumed for MO {mo.mo_number} at {mo_wh}:{mo_loc}",
                     )
                     db.session.add(entry)
         # Add finished product to stock
-        inv = Inventory.query.filter_by(product_id=mo.product_id).first()
-        if not inv:
-            inv = Inventory(product_id=mo.product_id, on_hand_qty=0)
-            db.session.add(inv)
-            db.session.flush()
+        from app.services.inventory.inventory_service import InventoryService
+        inv = InventoryService.get_or_create_inventory(
+            mo.product_id, warehouse=mo_wh, location=mo_loc
+        )
         before = inv.on_hand_qty
         inv.on_hand_qty += mo.quantity
         entry = StockLedger(
@@ -56,7 +61,7 @@ class ProductionService:
             unit_price=mo.product.cost_price,
             total_value=mo.quantity * mo.product.cost_price,
             user_id=user_id,
-            notes=f"Produced from MO {mo.mo_number}",
+            notes=f"Produced from MO {mo.mo_number} to {mo_wh}:{mo_loc}",
         )
         db.session.add(entry)
         db.session.commit()

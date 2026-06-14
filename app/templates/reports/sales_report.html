@@ -113,6 +113,19 @@
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    function getThemeColors() {
+        const style = getComputedStyle(document.documentElement);
+        return {
+            sans: style.getPropertyValue('--font-sans').trim() || 'Inter, sans-serif',
+            mono: style.getPropertyValue('--font-mono').trim() || 'monospace',
+            textSec: style.getPropertyValue('--color-text-secondary').trim() || '#a0a0ab',
+            textDim: style.getPropertyValue('--color-text-dim').trim() || '#6b6b78',
+            border: style.getPropertyValue('--color-border').trim() || 'rgba(255, 255, 255, 0.07)',
+            bgSurface: style.getPropertyValue('--color-bg-surface').trim() || '#111113'
+        };
+    }
+
+    let colors = getThemeColors();
     const ctx = document.getElementById('salesChart').getContext('2d');
     
     // Create background fill gradient
@@ -125,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function() {
     borderGradient.addColorStop(0, '#10b981');
     borderGradient.addColorStop(1, '#38bdf8');
 
-    new Chart(ctx, {
+    const salesChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: [{% for s in sales %}'{{ s.date }}',{% endfor %}],
@@ -153,10 +166,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(17, 17, 19, 0.95)',
+                    backgroundColor: colors.bgSurface,
                     titleColor: '#f0f0f2',
-                    bodyColor: '#a0a0ab',
-                    borderColor: 'rgba(255,255,255,0.08)',
+                    bodyColor: colors.textSec,
+                    borderColor: colors.border,
                     borderWidth: 1,
                     padding: 12,
                     displayColors: false,
@@ -171,12 +184,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 x: {
                     grid: {
                         color: 'rgba(255,255,255,0.03)',
-                        borderColor: 'rgba(255,255,255,0.05)'
+                        borderColor: colors.border
                     },
                     ticks: {
-                        color: '#6b6b78',
+                        color: colors.textDim,
                         font: {
-                            family: 'Inter',
+                            family: colors.sans,
                             size: 11
                         }
                     }
@@ -184,12 +197,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 y: {
                     grid: {
                         color: 'rgba(255,255,255,0.03)',
-                        borderColor: 'rgba(255,255,255,0.05)'
+                        borderColor: colors.border
                     },
                     ticks: {
-                        color: '#6b6b78',
+                        color: colors.textDim,
                         font: {
-                            family: 'Inter',
+                            family: colors.sans,
                             size: 11
                         },
                         callback: function(value) {
@@ -199,6 +212,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             }
         }
+    });
+
+    // Listen for custom theme change event to keep UI completely harmonized
+    document.addEventListener('themechanged', function(e) {
+        const newColors = getThemeColors();
+        
+        salesChart.options.plugins.tooltip.backgroundColor = newColors.bgSurface;
+        salesChart.options.plugins.tooltip.bodyColor = newColors.textSec;
+        salesChart.options.plugins.tooltip.borderColor = newColors.border;
+        
+        salesChart.options.scales.x.grid.borderColor = newColors.border;
+        salesChart.options.scales.x.ticks.color = newColors.textDim;
+        
+        salesChart.options.scales.y.grid.borderColor = newColors.border;
+        salesChart.options.scales.y.ticks.color = newColors.textDim;
+        
+        salesChart.update();
     });
 });
 </script>
